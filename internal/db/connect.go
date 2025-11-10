@@ -1,4 +1,4 @@
-package db
+package database
 
 import (
 	//"fmt"
@@ -11,9 +11,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var db *pgxpool.Pool
-
-func connectDB() *pgxpool.Pool {
+func СonnectDB() (*pgxpool.Pool, error) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -23,16 +21,16 @@ func connectDB() *pgxpool.Pool {
 	ip := os.Getenv("DB_IP")
 	db_name := os.Getenv("DB_NAME")
 	port := os.Getenv("DB_PORT")
-	url := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, password, ip, db_name, port)
+	url := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, password, ip, port, db_name)
 	config, err := pgxpool.ParseConfig(url)
 	if err != nil {
-		log.Fatalf("Unable to parse DB config: %v\n", err)
+		return nil, fmt.Errorf("error parsing DB config: %w", err)
 	}
 
 	dbpool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v\n", err)
+		return nil, fmt.Errorf("error connecting to DB: %w", err)
 	}
 
-	return dbpool
+	return dbpool, nil
 }

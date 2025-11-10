@@ -30,11 +30,13 @@ type InsertResponse struct {
 }
 
 func main() {
+	//подгрузка конфига
 	cfg := config.MustLoad()
 	//fmt.Println(cfg)
 	log := setupLogger(cfg.Env)
 	log.Info("starting server", slog.String("env", cfg.Env))
 
+	//открытие содеинения с бд
 	db, error := database.СonnectDB()
 	if error != nil {
 		log.Error("DB connection failed",
@@ -42,9 +44,11 @@ func main() {
 			slog.String("error", error.Error()))
 
 	} else {
-		log.Info("Connetion to db is succes", slog.String("env", cfg.Env))
+		log.Info("Connetion to db is success", slog.String("env", cfg.Env))
 	}
 	defer db.Close()
+
+	//выполнение миграции
 
 }
 

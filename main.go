@@ -48,8 +48,6 @@ func main() {
 	}
 	defer db.Close()
 
-	//выполнение миграции
-
 }
 
 func setupLogger(env string) *slog.Logger {

@@ -1,14 +1,15 @@
 package main
 
 import (
-	//"fmt"
+	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 
 	//"math/rand"
 	//"strconv"
 	//"encoding/json"
-	//"github.com/gorilla/mux"
+
 	//"bytes"
 	//"io"
 
@@ -32,9 +33,21 @@ type InsertResponse struct {
 func main() {
 	//подгрузка конфига
 	cfg := config.MustLoad()
-	//fmt.Println(cfg)
 	log := setupLogger(cfg.Env)
-	log.Info("starting server", slog.String("env", cfg.Env))
+	log.Info("got config", slog.String("env", cfg.Env))
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello, Go!")
+	})
+
+	// получение данных из конфига
+	srv := &http.Server{
+		Addr:        cfg.Address,
+		ReadTimeout: cfg.Timeout,
+		IdleTimeout: cfg.IdleTimeout,
+		Handler:     mux,
+	}
 
 	//открытие содеинения с бд
 	db, error := database.СonnectDB()
@@ -48,6 +61,11 @@ func main() {
 	}
 	defer db.Close()
 
+	//это запуск сервера
+	log.Info("server listening", slog.String("addr", cfg.Address))
+	if err := srv.ListenAndServe(); err != nil {
+		log.Error("server failed", slog.String("error", err.Error()))
+	}
 }
 
 func setupLogger(env string) *slog.Logger {

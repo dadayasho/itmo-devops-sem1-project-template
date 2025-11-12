@@ -26,11 +26,11 @@ const (
 )
 
 type InsertResponse struct {
-	TotalCount      int `yaml:"total_count"`
-	DuplicatesCount int `yaml:"duplicates_count"`
-	TotalItems      int `yaml:"total_items"`
-	TotalCategories int `yaml:"total_categories"`
-	TotalPrice      int `yaml:"total_price"`
+	TotalCount      int `json:"total_count"`
+	DuplicatesCount int `json:"duplicates_count"`
+	TotalItems      int `json:"total_items"`
+	TotalCategories int `json:"total_categories"`
+	TotalPrice      int `json:"total_price"`
 }
 
 func main() {
@@ -51,12 +51,13 @@ func main() {
 		}
 	})
 
+	loggedMux := LoggingMiddleware(log, mux)
 	// получение данных из конфига
 	srv := &http.Server{
 		Addr:        cfg.Address,
 		ReadTimeout: cfg.Timeout,
 		IdleTimeout: cfg.IdleTimeout,
-		Handler:     mux,
+		Handler:     loggedMux,
 	}
 
 	//открытие содеинения с бд
@@ -88,6 +89,19 @@ func setupLogger(env string) *slog.Logger {
 	return log
 }
 
+func LoggingMiddleware(log *slog.Logger, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		log.Info("http request",
+			slog.String("method", r.Method),
+			slog.String("url", r.URL.String()),
+			slog.String("remote", r.RemoteAddr),
+			slog.Duration("duration", time.Since(start)),
+		)
+	})
+}
+
 // ручка на отправку файлов
 func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -103,7 +117,7 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 	//определяем тип передаваемого архива
 	switch fileType {
 	case "tar":
-		err := unpackage.Untar(r.Body, "./tmp/extracted")
+		err := unpackage.Untar(r.Body, "/tmp/extracted")
 		if err != nil {
 			http.Error(w, "Ошибка распаковки: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -116,7 +130,7 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 		}
 		readerAt := bytes.NewReader(buf)
 		size := int64(len(buf))
-		err = unpackage.Unzip(readerAt, size, "./tmp/extracted")
+		err = unpackage.Unzip(readerAt, size, "/tmp/extracted")
 		if err != nil {
 			http.Error(w, "Ошибка распаковки: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -124,7 +138,7 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// находим файл
-	csvpath, error := findcsv.FindAnyCSV("./tmp/extracted")
+	csvpath, error := findcsv.FindAnyCSV("/tmp/extracted")
 	if error != nil {
 		http.Error(w, "Ошибка поиска csv файла в архиве: "+error.Error(), http.StatusInternalServerError)
 		return
@@ -196,13 +210,18 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// подсчет тотальной цены
-	var total_price int
-	_ = db.QueryRow(ctx, "SELECT SUM(price) FROM prices").Scan(&total_price)
+	var total float64
+	err = db.QueryRow(ctx, "SELECT SUM(price) FROM prices").Scan(&total)
+	if err != nil {
+		http.Error(w, "Ошибка подсчета суммы:"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	var total_price int = int(total)
 
 	// очистка директории с архивом
-	entries, _ := os.ReadDir("./tmp/extracted")
+	entries, _ := os.ReadDir("/tmp/extracted")
 	for _, entry := range entries {
-		_ = os.RemoveAll(filepath.Join("./tmp/extracted", entry.Name()))
+		_ = os.RemoveAll(filepath.Join("/tmp/extracted", entry.Name()))
 	}
 
 	// создание ответа
@@ -266,7 +285,7 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 	defer db.Close()
 
 	// создание файла csv
-	file, err := os.Create("/tmp/preextracted/output.csv")
+	file, err := os.Create("/tmp/preextracted/data.csv")
 	if err != nil {
 		http.Error(w, "Ошибка создания файла csv: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -316,7 +335,6 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// После всех записей нужно явно вызвать Flush()
 	writer.Flush()
 	if err := writer.Error(); err != nil {
 		http.Error(w, "Ошибка при записи CSV: "+err.Error(), http.StatusInternalServerError)
@@ -328,20 +346,18 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ошибка создания архива: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// defer archive.Close() - не вызывать здесь
 
 	zipWriter := zip.NewWriter(archive)
-	// defer zipWriter.Close() - не вызывать здесь
 
-	f1, err := os.Open("/tmp/preextracted/output.csv")
+	f1, err := os.Open("/tmp/preextracted/data.csv")
 	if err != nil {
 		http.Error(w, "Ошибка открытия CSV файла для записи в архив: "+err.Error(), http.StatusInternalServerError)
-		archive.Close() // Закрываем при ошибке
+		archive.Close()
 		return
 	}
 	defer f1.Close()
 
-	w1, err := zipWriter.Create("csv/output.csv")
+	w1, err := zipWriter.Create("csv/data.csv")
 	if err != nil {
 		http.Error(w, "Ошибка добавления файла в zip архив: "+err.Error(), http.StatusInternalServerError)
 		f1.Close()
@@ -356,20 +372,17 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Явно закрываем zipWriter для завершения записи архива
 	if err := zipWriter.Close(); err != nil {
 		http.Error(w, "Ошибка закрытия zip архива: "+err.Error(), http.StatusInternalServerError)
 		archive.Close()
 		return
 	}
 
-	// Явно закрываем файл архива для записи перед повторным открытием
 	if err := archive.Close(); err != nil {
 		http.Error(w, "Ошибка закрытия файла архива: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Теперь открываем файл архива для отдачи клиенту
 	file, err = os.Open("/tmp/preextracted/archive.zip")
 	if err != nil {
 		http.Error(w, "Ошибка получения архива", http.StatusInternalServerError)

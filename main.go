@@ -225,107 +225,158 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//считываем параметры из запроса
+	// считываем параметры из запроса
 	dateStart := r.URL.Query().Get("start")
 	dateEnd := r.URL.Query().Get("end")
 	min := r.URL.Query().Get("min")
 	max := r.URL.Query().Get("max")
 
 	// валидация параметров
-	int_min, _ := strconv.Atoi(min)
-	int_max, _ := strconv.Atoi(max)
-
-	// проверка передаваемых значений
-	if int_min <= 0 && int_max <= 0 {
-		http.Error(w, "Неверный тип передаваемого значения цены", http.StatusMethodNotAllowed)
+	int_min, err := strconv.Atoi(min)
+	if err != nil {
+		http.Error(w, "Неверный формат min", http.StatusBadRequest)
+		return
 	}
+	int_max, err := strconv.Atoi(max)
+	if err != nil {
+		http.Error(w, "Неверный формат max", http.StatusBadRequest)
+		return
+	}
+
+	if int_min <= 0 && int_max <= 0 {
+		http.Error(w, "Неверный тип передаваемого значения цены", http.StatusBadRequest)
+		return
+	}
+
 	if _, err := time.Parse("2006-01-02", dateStart); err != nil {
-		http.Error(w, "Неверный тип передаваемого значения начальной даты", http.StatusMethodNotAllowed)
+		http.Error(w, "Неверный тип передаваемого значения начальной даты", http.StatusBadRequest)
+		return
 	}
 	if _, err := time.Parse("2006-01-02", dateEnd); err != nil {
-		http.Error(w, "Неверный тип передаваемого значения конечной даты", http.StatusMethodNotAllowed)
+		http.Error(w, "Неверный тип передаваемого значения конечной даты", http.StatusBadRequest)
+		return
 	}
 
 	// подключение к бд
-	db, error := database.СonnectDB()
-	if error != nil {
-		http.Error(w, "Не удалось подключиться к базе данных: "+error.Error(), http.StatusInternalServerError)
+	db, err := database.СonnectDB()
+	if err != nil {
+		http.Error(w, "Не удалось подключиться к базе данных: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 	defer db.Close()
 
 	// создание файла csv
-	file, err := os.Create("./tmp/preextracted/output.csv")
+	file, err := os.Create("/tmp/preextracted/output.csv")
 	if err != nil {
-		http.Error(w, "Ошибка создания файла csv: "+error.Error(), http.StatusInternalServerError)
+		http.Error(w, "Ошибка создания файла csv: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer file.Close()
+
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
-	writer.Write([]string{"id", "name", "category", "price", "create_date"})
-	defer file.Close()
-	defer writer.Flush()
+
+	if err := writer.Write([]string{"id", "name", "category", "price", "create_date"}); err != nil {
+		http.Error(w, "Ошибка записи заголовков CSV: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	// получение данных с таблицы
 	ctx := context.Background()
-	rows, error := db.Query(ctx, `
-    SELECT id, name, category, price, create_date FROM prices
-    WHERE price > $1 AND price < $2 AND create_date > $3 AND create_date < $4
-	`, int_min, int_max, dateStart, dateEnd)
-	if error != nil {
-		http.Error(w, "Не удалось подключиться считать данные из из таблицы: "+error.Error(), http.StatusInternalServerError)
+	rows, err := db.Query(ctx, `
+		SELECT id, name, category, price, create_date FROM prices
+		WHERE price > $1 AND price < $2 AND create_date BETWEEN $3 and $4
+		`, int_min, int_max, dateStart, dateEnd)
+	if err != nil {
+		http.Error(w, "Не удалось считать данные из таблицы: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var id int
-		var name string
-		var category string
+		var name, category string
 		var price float64
-		var create_date string
-		_ = rows.Scan(&id, &name, &category, &price, &create_date)
+		var create_date time.Time
 
-		writer.Write([]string{
+		if err := rows.Scan(&id, &name, &category, &price, &create_date); err != nil {
+			http.Error(w, "Ошибка при чтении данных из базы: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if err := writer.Write([]string{
 			strconv.Itoa(id),
 			name,
 			category,
 			fmt.Sprintf("%.2f", price),
-			create_date,
-		})
+			create_date.Format("2006-01-02"),
+		}); err != nil {
+			http.Error(w, "Ошибка записи CSV: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
-	// создание архива
-	archive, err := os.Create("./tmp/preextracted/archive.zip")
-	if err != nil {
-		http.Error(w, "Ошибка создания архива: "+error.Error(), http.StatusInternalServerError)
+	// После всех записей нужно явно вызвать Flush()
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		http.Error(w, "Ошибка при записи CSV: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
-	defer archive.Close()
+
+	archive, err := os.Create("/tmp/preextracted/archive.zip")
+	if err != nil {
+		http.Error(w, "Ошибка создания архива: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// defer archive.Close() - не вызывать здесь
+
 	zipWriter := zip.NewWriter(archive)
+	// defer zipWriter.Close() - не вызывать здесь
 
-	// добавление файла в zip
-	f1, err := os.Open("./tmp/preextracted/output.csv")
+	f1, err := os.Open("/tmp/preextracted/output.csv")
 	if err != nil {
-		http.Error(w, "Ошибка открытия архива для записи"+error.Error(), http.StatusInternalServerError)
+		http.Error(w, "Ошибка открытия CSV файла для записи в архив: "+err.Error(), http.StatusInternalServerError)
+		archive.Close() // Закрываем при ошибке
+		return
 	}
 	defer f1.Close()
+
 	w1, err := zipWriter.Create("csv/output.csv")
 	if err != nil {
-		http.Error(w, "Ошибка добавления файла в zip архив:"+error.Error(), http.StatusInternalServerError)
+		http.Error(w, "Ошибка добавления файла в zip архив: "+err.Error(), http.StatusInternalServerError)
+		f1.Close()
+		archive.Close()
+		return
 	}
-	if _, err := io.Copy(w1, f1); err != nil {
-		panic(err)
-	}
-	zipWriter.Close()
 
-	// Открытие файла
-	file, err = os.Open("./tmp/preextracted/archive.zip")
+	if _, err := io.Copy(w1, f1); err != nil {
+		http.Error(w, "Ошибка копирования файла в архив: "+err.Error(), http.StatusInternalServerError)
+		f1.Close()
+		archive.Close()
+		return
+	}
+
+	// Явно закрываем zipWriter для завершения записи архива
+	if err := zipWriter.Close(); err != nil {
+		http.Error(w, "Ошибка закрытия zip архива: "+err.Error(), http.StatusInternalServerError)
+		archive.Close()
+		return
+	}
+
+	// Явно закрываем файл архива для записи перед повторным открытием
+	if err := archive.Close(); err != nil {
+		http.Error(w, "Ошибка закрытия файла архива: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Теперь открываем файл архива для отдачи клиенту
+	file, err = os.Open("/tmp/preextracted/archive.zip")
 	if err != nil {
-		http.Error(w, "Ошипка получения архива", http.StatusInternalServerError)
+		http.Error(w, "Ошибка получения архива", http.StatusInternalServerError)
 		return
 	}
 	defer file.Close()
 
-	// Получение информации о файле
 	fileInfo, err := file.Stat()
 	if err != nil {
 		http.Error(w, "Ошибка получения информации об архиве", http.StatusInternalServerError)
@@ -333,18 +384,18 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/zip")
-	w.Header().Set("Content-Disposition", `attachment; filename="`+fileInfo.Name()+`"`)
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, fileInfo.Name()))
 	w.Header().Set("Content-Length", strconv.FormatInt(fileInfo.Size(), 10))
 
 	_, err = io.Copy(w, file)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		http.Error(w, "Ошибка передачи архива: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// очистка репоризотория
-	entries, _ := os.ReadDir("./tmp/preextracted")
+	// очистка директории
+	entries, _ := os.ReadDir("/tmp/preextracted")
 	for _, entry := range entries {
-		_ = os.RemoveAll(filepath.Join("./tmp/preextracted", entry.Name()))
+		_ = os.RemoveAll(filepath.Join("/tmp/preextracted", entry.Name()))
 	}
 }

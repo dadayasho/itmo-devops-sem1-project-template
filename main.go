@@ -40,8 +40,16 @@ func main() {
 	log.Info("got config", slog.String("env", cfg.Env))
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/v0/prices", UploadOnServer)
-	mux.HandleFunc("/api/v0/prices", GetTheInfo)
+	mux.HandleFunc("/api/v0/prices", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			GetTheInfo(w, r)
+		case http.MethodPost:
+			UploadOnServer(w, r)
+		default:
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
 
 	// получение данных из конфига
 	srv := &http.Server{

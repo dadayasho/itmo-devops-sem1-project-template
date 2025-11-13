@@ -17,7 +17,7 @@ import (
 
 	"itmo-devops-sem1-project-template/internal/config"
 	database "itmo-devops-sem1-project-template/internal/db"
-	findcsv "itmo-devops-sem1-project-template/internal/findcsv"
+	findcsv "itmo-devops-sem1-project-template/internal/findCsv"
 	unpackage "itmo-devops-sem1-project-template/internal/tools"
 )
 
@@ -61,16 +61,16 @@ func main() {
 	}
 
 	//открытие содеинения с бд
-	db, error := database.СonnectDB()
-	if error != nil {
-		log.Error("DB connection failed",
-			slog.String("env", cfg.Env),
-			slog.String("error", error.Error()))
+	//db, error := database.СonnectDB(".env")
+	//if error != nil {
+	//	log.Error("DB connection failed",
+	//		slog.String("env", cfg.Env),
+	//		slog.String("error", error.Error()))
 
-	} else {
-		log.Info("Connetion to db is success", slog.String("env", cfg.Env))
-	}
-	defer db.Close()
+	//} else {
+	//	log.Info("Connetion to db is success", slog.String("env", cfg.Env))
+	//}
+	//defer db.Close()
 
 	//это запуск сервера
 	log.Info("server listening", slog.String("addr", cfg.Address))
@@ -145,7 +145,7 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// подключаемся к бд
-	db, error := database.СonnectDB()
+	db, error := database.СonnectDB(".env")
 	if error != nil {
 		http.Error(w, "Не удалось подключиться к базе данных: "+error.Error(), http.StatusInternalServerError)
 	}
@@ -277,7 +277,7 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// подключение к бд
-	db, err := database.СonnectDB()
+	db, err := database.СonnectDB(".env")
 	if err != nil {
 		http.Error(w, "Не удалось подключиться к базе данных: "+err.Error(), http.StatusInternalServerError)
 		return

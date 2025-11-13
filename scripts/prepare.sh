@@ -1,3 +1,5 @@
 #!/bin/bash
 
-docker build .
+docker build -t tonysoprano228/go-server .
+docker push tonysoprano228/go-server
+

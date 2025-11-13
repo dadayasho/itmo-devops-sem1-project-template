@@ -15,3 +15,12 @@ services:
       - ./pgdata:/var/lib/postgresql/data/pgdata
     env_file:
       - .env
+  
+  backend:
+    image: tonysoprano228/go-server:latest
+    depends_on:
+      - postgres
+    container_name: go-server
+    ports:
+      - 8080:8080
+    

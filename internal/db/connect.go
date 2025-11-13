@@ -11,8 +11,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func СonnectDB() (*pgxpool.Pool, error) {
-	err := godotenv.Load()
+func СonnectDB(path string) (*pgxpool.Pool, error) {
+	err := godotenv.Load(path)
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}

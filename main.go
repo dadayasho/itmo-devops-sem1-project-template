@@ -303,8 +303,16 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 	// получение данных с таблицы
 	ctx := context.Background()
 	rows, err := db.Query(ctx, `
-		SELECT id, name, category, price, create_date FROM prices
-		WHERE price > $1 AND price < $2 AND create_date BETWEEN $3 and $4
+		SELECT id, name, category, price, create_date
+		FROM prices
+		WHERE 
+		price >= $1 AND price <= $2
+		AND create_date BETWEEN $3 AND $4
+		AND name IS NOT NULL AND name <> ''
+		AND category IS NOT NULL AND category <> ''
+		AND price IS NOT NULL
+		AND create_date IS NOT NULL
+		AND category NOT LIKE 'invalid_%'
 		`, int_min, int_max, dateStart, dateEnd)
 	if err != nil {
 		http.Error(w, "Не удалось считать данные из таблицы: "+err.Error(), http.StatusInternalServerError)
@@ -357,7 +365,7 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 	}
 	defer f1.Close()
 
-	w1, err := zipWriter.Create("csv/data.csv")
+	w1, err := zipWriter.Create("data.csv")
 	if err != nil {
 		http.Error(w, "Ошибка добавления файла в zip архив: "+err.Error(), http.StatusInternalServerError)
 		f1.Close()

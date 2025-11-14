@@ -312,7 +312,6 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 		AND category IS NOT NULL AND category <> ''
 		AND price IS NOT NULL
 		AND create_date IS NOT NULL
-		AND category NOT LIKE 'invalid_%'
 		`, int_min, int_max, dateStart, dateEnd)
 	if err != nil {
 		http.Error(w, "Не удалось считать данные из таблицы: "+err.Error(), http.StatusInternalServerError)

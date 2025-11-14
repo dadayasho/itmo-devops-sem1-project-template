@@ -4,18 +4,15 @@ import (
 	//"fmt"
 	"context"
 	"fmt"
-	"log"
+
+	//"log"
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/joho/godotenv"
+	//"github.com/joho/godotenv"
 )
 
-func СonnectDB(path string) (*pgxpool.Pool, error) {
-	err := godotenv.Load(path)
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+func СonnectDB() (*pgxpool.Pool, error) {
 	user := os.Getenv("DB_USER_NAME")
 	password := os.Getenv("DB_USER_PASSWORD")
 	ip := os.Getenv("DB_IP")

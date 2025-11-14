@@ -45,7 +45,7 @@ func importCSVWithUpsert(pool *pgxpool.Pool, filePath string) error {
 }
 
 func main() {
-	db, error := database.СonnectDB(".env")
+	db, error := database.СonnectDB()
 	if error != nil {
 		log.Fatalf("DB connection lost: %v", error)
 	}

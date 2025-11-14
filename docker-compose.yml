@@ -21,6 +21,14 @@ services:
     depends_on:
       - postgres
     container_name: go-server
+    environment:
+      DB_USER_NAME: ${DB_USER_NAME}
+      DB_USER_PASSWORD: ${DB_USER_PASSWORD}
+      DB_IP: ${DB_IP}
+      DB_NAME: ${DB_NAME}
+      DB_PORT: ${DB_PORT}
+    env_file:
+      - .env
     ports:
       - 8080:8080
     

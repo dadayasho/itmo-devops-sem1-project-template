@@ -1,3 +1,4 @@
 .env
 /pgdata
-/Users/maxim_p/itmo-devops-sem1-project-template/internal/insertInDB/.env
+/terraform/var.tfvars
+/terraform/conf

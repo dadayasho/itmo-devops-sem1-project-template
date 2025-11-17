@@ -8,7 +8,9 @@ terraform {
 
 
   backend "s3" {
-    endpoint   = "https://storage.yandexcloud.net"
+    endpoints   =  {
+      "https://storage.yandexcloud.net"
+    }
     bucket     = "maxiks-backet"
     region     = "ru-central1"
     key        = "states/terraform.tfstate"

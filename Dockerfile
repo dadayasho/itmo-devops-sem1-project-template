@@ -16,7 +16,8 @@ COPY sample_data ./sample_data
 COPY insertInDB ./insertInDB
 
 
-RUN go build -o itmo-devops-sem1-project-template .
+RUN go build -tags 'postgres' -o itmo-devops-sem1-project-template .
+
 EXPOSE 8080
 
 CMD ["./itmo-devops-sem1-project-template"]

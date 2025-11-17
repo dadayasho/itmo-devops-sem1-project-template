@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd terraform
-terraform init
+terraform init -reconfigure
 terraform plan  
 terraform apply -var "access_key=${AWS_ACCESS_KEY_ID}" -var "secret_key=${SECRET_KEY}" -auto-approve
 

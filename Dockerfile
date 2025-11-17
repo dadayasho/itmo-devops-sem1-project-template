@@ -5,15 +5,14 @@ RUN mkdir -p /tmp/extracted
 
 WORKDIR /itmo-devops-sem1-project-template
 
-COPY go.mod go.sum ./
+
+COPY . ./
 RUN go mod download
 RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-COPY . .
 
-
-RUN go build -o itmo-devops-sem1-project-template .
+RUN go build -o app .
 
 EXPOSE 8080
 
-CMD ["./itmo-devops-sem1-project-template"]
+CMD ["./app"]
 

@@ -25,11 +25,36 @@ jobs:
         DOCKER_USER: ${{ secrets.DOCKER_USER }}
       run: bash scripts/prepare.sh
 
+  run:
+    runs-on: ubuntu-latest
+    depends_on:
+      - build
+    steps:
+    
+      
+      - name: Copy folder
+        uses: actions/checkout@v3
+      
+      - name: Run scripts
+        env:
+          - DB_USER_NAME: ${{ secrets.DB_USER_NAME }}
+          - DB_USER_PASSWORD: ${{ secrets.DB_USER_PASSWORD }}
+          - DB_IP: ${{ secrets.DB_IP }} 
+          - DB_NAME: ${{ secrets.DB_NAME }}
+          - DB_PORT: ${{ secrets.DB_PORT }}
+          - AWS_ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY }}
+          - AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_KEY }}
+          - YC_TOKEN: ${{ secrets.TOKEN }}
+          - YC_CLOUD_ID: ${{ secrets.CLOUD_ID }}
+          - YC_FOLDER_ID: ${{ secrets.FOLDER_ID }}
+        run: bash scripts/run.sh
+
     
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-
+    depends_on:
+      - run
     services:
       postgres:
         image: postgres:15

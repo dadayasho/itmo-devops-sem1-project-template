@@ -17,8 +17,11 @@ ssh -o StrictHostKeyChecking=no -l maxim ${HOST_IP} "
 "
 scp ../docker-compose.yml maxim@${HOST_IP}:/home/maxim/docker-compose.yml
 #docker compose up -d
+ssh -o StrictHostKeyChecking=no -l maxim ${HOST_IP} "
+  cd /home/maxim
 
-#docker compose exec go-server apt install golang-migrate # добавить migrate в 
-#docker compose exec go-server migrate -path=./migrations -database "postgresql://validator:val1dat0r@postgres:5432/project-sem-1?sslmode=disable" -verbose up # миграции бд
-#docker compose exec go-server  go run insertInDB/insert.go # вставка данных в таблицу
-
+  docker compose up -d
+  docker compose exec backend apt install golang-migrate
+  docker compose exec backend migrate -path=./migrations -database "postgresql://validator:val1dat0r@postgres:5432/project-sem-1?sslmode=disable" -verbose up 
+  docker compose exec backend  go run insertInDB/insert.go 
+"

@@ -1,0 +1,9 @@
+#cloud-config
+users:
+  - name: maxim
+    groups: sudo
+    shell: /bin/bash
+    sudo: 'ALL=(ALL) NOPASSWD:ALL'
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCxNjloLA6NY5kUgWH2Z0ECpl5xfZLP8E2vOPjZDODRiL+wCxTTznI2hG3xxNMbKr9FL9aZeW+J71X4EiCHqTTBbAQlAbiq9PvIUvrkt5AmOs3CW3mN8HtdLbHzciu0vIBhASb02XSk7DCiFRKFMHaSlew4wlHK0ApWdrxsXm+OjnwdrgufD/mio7WuF4rZ8F2EZhnxopclU1hBjlWgFs+h9jNk8Jda04EuOhv8yaqwNVkKkdtmwRV3aEcTwNwiaSrwH70G3+auDpb3AdxXYR08f1poKyntejqk2dZsa8+aWPeHOgbhZPePFjfKGoxgzQb+qINAhJyEoI/uP0X3zZkO6v79NBALzCAPhltJs96/0yo2OI8kpI8nBTx+ukihNePAKj/EGwuzPpyHjAGXhaJDfEB9sztwDqidzJM3HiI0Y4v8Di0eQNVJb+I4oWSEz9dRJpICX/QEwKfQvAZlwjmUGF1KKyv2zP0jbfG9d30VUw9PlxQ4GSSmjPNkt/COgoU= vboxuser@max
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOP6iJnASb0Z8B25+tG742h42OsTgLGYpi+7SIkvcBN6 maxim_p@MacBook-Pro-Maksim-2.local

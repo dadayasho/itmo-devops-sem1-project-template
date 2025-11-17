@@ -7,6 +7,26 @@ on:
     branches: [ main, master ]
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USER}}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Copy repository
+      uses: actions/checkout@v3
+
+    - name: Run scripts
+      env:
+        DOCKER_USER: ${{ secrets.DOCKER_USER }}
+      run: bash scripts/prepare.sh
+    
+  run:
+    
   test:
     name: Run Tests
     runs-on: ubuntu-latest
@@ -101,21 +121,5 @@ jobs:
           exit 1
         fi
   
-  build:
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USER}}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    - name: Copy repository
-      uses: actions/checkout@v3
-
-    - name: Run scripts
-      env:
-        DOCKER_USER: ${{ secrets.DOCKER_USER }}
-      run: bash scripts/prepare.sh
+  
 

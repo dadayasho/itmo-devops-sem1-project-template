@@ -5,6 +5,18 @@ terraform {
     }
   }
   required_version = ">= 0.13" // версия, совместимая с провайдером версия Terraform
+
+
+  backend "s3" {
+    endpoint   = "https://storage.yandexcloud.net"
+    bucket     = "maxiks-backet"
+    region     = "ru-central1"
+    key        = "states/terraform.tfstate"
+    skip_region_validation      = true
+    skip_credentials_validation = true
+    
+  }
+
 }
 
 provider "yandex" {
@@ -63,7 +75,7 @@ resource "yandex_compute_instance" "vm-1" {
   
 }
 
-output "ip_adress" {
+output "ip_address" {
     description = "Static IP"
     value       = yandex_compute_instance.vm-1.network_interface[0].nat_ip_address
 }

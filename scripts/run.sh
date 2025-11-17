@@ -3,7 +3,7 @@
 cd terraform
 terraform init
 terraform plan  
-terraform apply -auto-approve
+run: terraform apply -var "access_key=${{ secrets.ACCESS_KEY }}" -var "secret_key=${{ secrets.SECRET_KEY }}" -auto-approve
 
 HOST_IP=$(terraform output -raw ip_address)
 

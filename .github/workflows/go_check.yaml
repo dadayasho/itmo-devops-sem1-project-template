@@ -47,8 +47,8 @@ jobs:
           DB_IP: ${{ secrets.DB_IP }} 
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_PORT: ${{ secrets.DB_PORT }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_KEY }}
+          #AWS_ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY }}
+          #AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_KEY }}
           YC_TOKEN: ${{ secrets.TOKEN }}
           YC_CLOUD_ID: ${{ secrets.CLOUD_ID }}
           YC_FOLDER_ID: ${{ secrets.FOLDER_ID }}

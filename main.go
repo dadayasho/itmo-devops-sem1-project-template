@@ -17,7 +17,7 @@ import (
 
 	"itmo-devops-sem1-project-template/internal/config"
 	database "itmo-devops-sem1-project-template/internal/db"
-	findcsv "itmo-devops-sem1-project-template/internal/findCsv"
+	findcsv "itmo-devops-sem1-project-template/internal/findcsv"
 	unpackage "itmo-devops-sem1-project-template/internal/tools"
 )
 

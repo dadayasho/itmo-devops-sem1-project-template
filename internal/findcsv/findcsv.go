@@ -1,4 +1,4 @@
-package findcsv
+package findCsv
 
 import (
 	"os"

@@ -11,11 +11,10 @@ terraform {
     endpoints = {
       s3 = "https://storage.yandexcloud.net"
     }
-    bucket           = "maxiks-backet"
-    key              = "states/terraform.tfstate"
+    bucket         = "maxiks-backet"
+    key            = "states/terraform.tfstate"
     use_path_style = true
-    skip_credentials_validation = true
-    
+    region         = "us-east-1" 
   }
 
 }

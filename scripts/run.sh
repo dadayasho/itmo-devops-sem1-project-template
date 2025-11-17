@@ -3,7 +3,7 @@
 cd terraform
 terraform init -reconfigure
 terraform plan  
-terraform apply -var "access_key=${AWS_ACCESS_KEY_ID}" -var "secret_key=${SECRET_KEY}" -auto-approve
+terraform apply -auto-approve
 
 HOST_IP=$(terraform output -raw ip_address)
 

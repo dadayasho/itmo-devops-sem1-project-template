@@ -2,7 +2,7 @@
 
 cd terraform
 terraform init
-terraform plan -var-file=var.tfvars 
+terraform plan  
 terraform apply -var-file=var.tfvars -auto-approve
 #работа терраформа
 HOST_IP=$(terraform output -raw ip_address)

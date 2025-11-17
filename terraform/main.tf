@@ -61,11 +61,9 @@ resource "yandex_compute_instance" "vm-1" {
     user-data = "${file("conf/meta.txt")}"
   }
   
-
-  output "vm's ip adress" {
-    description = "Static IP"
-    value       = yandex_compute_instance.vm-1.network_interface[0].nat_ip_address
-  }
-
 }
 
+output "ip_adress" {
+    description = "Static IP"
+    value       = yandex_compute_instance.vm-1.network_interface[0].nat_ip_address
+}

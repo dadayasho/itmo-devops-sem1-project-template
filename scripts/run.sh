@@ -1,5 +1,8 @@
 #!/bin/bash
 
+terraform plan -var-file=var.tfvars
+#работа терраформа
+HOST_IP = $(terraform output -raw ip_address)
 
 scp docker-compose.yml maxim@$(HOST_IP):/
 ssh -l maxim $(HOST_IP)

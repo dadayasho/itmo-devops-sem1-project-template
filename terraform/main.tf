@@ -13,8 +13,7 @@ terraform {
     }
     bucket           = "maxiks-backet"
     key              = "states/terraform.tfstate"
-    region           = "ru-central1"
-    force_path_style = true
+    use_path_style = true
     skip_credentials_validation = true
     
   }

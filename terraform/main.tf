@@ -8,13 +8,13 @@ terraform {
 
 
   backend "s3" {
-    endpoints   =  {
-      "https://storage.yandexcloud.net"
+    endpoints = {
+      s3 = "https://storage.yandexcloud.net"
     }
-    bucket     = "maxiks-backet"
-    region     = "ru-central1"
-    key        = "states/terraform.tfstate"
-    skip_region_validation      = true
+    bucket           = "maxiks-backet"
+    key              = "states/terraform.tfstate"
+    region           = "ru-central1"
+    force_path_style = true
     skip_credentials_validation = true
     
   }

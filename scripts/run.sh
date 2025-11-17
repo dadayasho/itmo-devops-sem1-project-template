@@ -4,7 +4,7 @@ cd terraform
 terraform init
 terraform plan  
 terraform apply -auto-approve
-#работа терраформа
+
 HOST_IP=$(terraform output -raw ip_address)
 
 ssh -o StrictHostKeyChecking=no -l maxim ${HOST_IP} "

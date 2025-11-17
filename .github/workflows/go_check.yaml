@@ -24,8 +24,7 @@ jobs:
       env:
         DOCKER_USER: ${{ secrets.DOCKER_USER }}
       run: bash scripts/prepare.sh
-    
-  run:
+
     
   test:
     name: Run Tests

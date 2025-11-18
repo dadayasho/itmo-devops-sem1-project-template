@@ -1,16 +1,10 @@
-variable "cloud_id" {
-  description = "Yandex Cloud ID"
-  type        = string
-}
+variable "token" {}
+variable "cloud_id" {}
+variable "folder_id" {}
 
-variable "folder_id" {
-  description = "Yandex Folder ID"
-  type        = string
-}
+variable "access_key" {}
+variable "secret_key" {}
 
-variable "token" {
-  description = "Yandex IAM Token"
-  type        = string
-  sensitive = true
+variable "zone" {
+  default = "ru-central1-a"
 }
-

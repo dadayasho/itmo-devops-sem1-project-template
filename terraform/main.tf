@@ -1,25 +1,27 @@
 terraform {
   required_providers {
     yandex = {
-      source = "yandex-cloud/yandex" // глобальный адрес источника провайдера
+      source = "yandex-cloud/yandex"
     }
   }
-  required_version = ">= 0.13" // версия, совместимая с провайдером версия Terraform
+  required_version = ">= 0.13"
 
 
   backend "s3" {
-    endpoint   = "https://storage.yandexcloud.net"
+    endpoints = {
+    s3 = "https://storage.yandexcloud.net"
+    }
     bucket     = "maxiks-backet"
     region     = "ru-central1"
     key        = "states/terraform.tfstate"
     skip_region_validation      = true
-    skip_credentials_validation = false
+    skip_credentials_validation = true
   }
 
 }
 
 provider "yandex" {
-  zone = "ru-central1-a" // зона доступности по-умолчанию, где будут создаваться ресурсы
+  zone = "ru-central1-a" 
   cloud_id  = var.cloud_id
   folder_id = var.folder_id
   token     = var.token

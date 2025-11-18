@@ -43,6 +43,7 @@ jobs:
           sudo apt update && sudo apt install terraform
         
       - name: Run scripts
+        id: get_ip
         env:
           DB_USER_NAME: ${{ secrets.DB_USER_NAME }}
           DB_USER_PASSWORD: ${{ secrets.DB_USER_PASSWORD }}
@@ -64,11 +65,10 @@ jobs:
           echo 'CONFIG_PATH=/itmo-devops-sem1-project-template/config/local.yaml' >> .env
           echo "=================" 
           bash scripts/run.sh
-        
-      - name: Get an IP address
-        run: | 
-            ip_address=$(cd terraform && terraform output -raw ip_address)
-            echo "HOST_IP=$ip_address" >> $GITHUB_OUTPUT
+          ip_address=$(cd terraform && terraform output -raw ip_address)
+          echo "HOST_IP=$ip_address" >> $GITHUB_OUTPUT
+      
+            
 
     
   test:

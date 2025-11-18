@@ -59,6 +59,7 @@ jobs:
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
           echo "DB_IP=${{ secrets.DB_IP }}" >> .env
+          echo 'CONFIG_PATH=/itmo-devops-sem1-project-template/config/local.yaml' >> .env
           echo "=================" 
           bash scripts/run.sh
 

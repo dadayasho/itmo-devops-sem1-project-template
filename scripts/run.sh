@@ -4,6 +4,11 @@ cd terraform
 env | grep AWS
 env | grep YC
 env | grep DB
+cat > terraform.tfvars <<EOF
+    token     = "${{ secrets.YC_TOKEN }}"
+    cloud_id  = "${{ secrets.YC_CLOUD_ID }}"
+    folder_id = "${{ secrets.YC_FOLDER_ID }}"
+    EOF
 terraform init -reconfigure
 terraform plan  
 terraform apply -auto-approve

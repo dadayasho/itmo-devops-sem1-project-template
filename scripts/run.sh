@@ -36,7 +36,7 @@ ssh -o StrictHostKeyChecking=no -l maxim ${HOST_IP} "
   sudo apt-get install docker-ce docker-ce-cli containerd.io -y
   sudo apt-get install docker-compose-plugin -y
 "
-# ====== Копируем переменные на сервер ======
+# ====== Копируем переменные на сервер =======
 scp ../.env maxim@${HOST_IP}:/home/maxim/.env
 
 # ====== Docker compose на сервер ======

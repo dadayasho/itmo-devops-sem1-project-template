@@ -54,11 +54,11 @@ jobs:
           YC_FOLDER_ID: ${{ secrets.FOLDER_ID }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          echo "=== DEBUG ENV ==="
-          env | grep AWS
-          env | grep DB_
-          env | grep YC_
-          env | grep SSH
+          echo "DB_USER_NAME=${{ secrets.DB_USER_NAME }}" > .env
+          echo "DB_USER_PASSWORD=${{ secrets.DB_USER_PASSWORD }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo "DB_IP=${{ secrets.DB_IP }}" >> .env
           echo "=================" 
           bash scripts/run.sh
 

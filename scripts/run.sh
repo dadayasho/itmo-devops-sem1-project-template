@@ -2,6 +2,7 @@
 
 cd terraform
 env | grep AWS
+env | grep YC
 terraform init -reconfigure
 terraform plan  
 terraform apply -auto-approve

@@ -67,7 +67,7 @@ jobs:
         
       - name: Get an IP address
         run: | 
-            ip_address=$(terraform output -raw ip_address)
+            ip_address=$(cd terraform && terraform output -raw ip_address)
             echo "HOST_IP=$ip_address" >> $GITHUB_OUTPUT
 
     

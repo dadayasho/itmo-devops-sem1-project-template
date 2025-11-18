@@ -13,7 +13,7 @@ terraform {
     region     = "ru-central1"
     key        = "states/terraform.tfstate"
     skip_region_validation      = true
-    skip_credentials_validation = true
+    skip_credentials_validation = false
   }
 
 }

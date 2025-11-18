@@ -52,11 +52,13 @@ jobs:
           YC_TOKEN: ${{ secrets.TOKEN }}
           YC_CLOUD_ID: ${{ secrets.CLOUD_ID }}
           YC_FOLDER_ID: ${{ secrets.FOLDER_ID }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           echo "=== DEBUG ENV ==="
           env | grep AWS
           env | grep DB_
           env | grep YC_
+          env | grep SSH
           echo "=================" 
           bash scripts/run.sh
 

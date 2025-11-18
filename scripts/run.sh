@@ -4,6 +4,7 @@ cd terraform
 env | grep AWS
 env | grep YC
 env | grep DB
+env | grep SSH
 cat > terraform.tfvars <<EOF
 token     = "${YC_TOKEN}"
 cloud_id  = "${YC_CLOUD_ID}"
@@ -14,6 +15,16 @@ terraform plan
 terraform apply -auto-approve
 
 HOST_IP=$(terraform output -raw ip_address)
+
+mkdir -p ~/.ssh
+echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+chmod 600 ~/.ssh/id_rsa
+
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_rsa
+
+
+ssh-keyscan -H "${HOST_IP}" >> ~/.ssh/known_hosts
 
 ssh -o StrictHostKeyChecking=no -l maxim ${HOST_IP} "
   sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release -y

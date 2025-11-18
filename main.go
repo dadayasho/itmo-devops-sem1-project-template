@@ -113,7 +113,10 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 
 	//считываем параметры из запроса
 	fileType := r.URL.Query().Get("type")
-
+	if fileType != "tar" && fileType != "zip" {
+		http.Error(w, "Недоступный тип переданых данных", http.StatusInternalServerError)
+		return
+	}
 	//определяем тип передаваемого архива
 	switch fileType {
 	case "tar":

@@ -45,6 +45,7 @@ scp ../docker-compose.yml maxim@${HOST_IP}:/home/maxim/docker-compose.yml
 # ====== Поднимаем бэкэнд ======
 ssh -o StrictHostKeyChecking=no -l maxim ${HOST_IP} "
   cd /home/maxim
+  sudo docker compose down
   sudo docker compose up -d
   sudo docker compose exec backend apt install golang-migrate
   sudo docker compose exec backend migrate -path=./migrations -database "postgresql://validator:val1dat0r@postgres:5432/project-sem-1?sslmode=disable" -verbose up 

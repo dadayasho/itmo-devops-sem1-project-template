@@ -7,8 +7,8 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Конфигурация
-API_HOST="http://130.193.39.110:8080"
-DB_HOST="130.193.39.110"
+API_HOST="http://${DB_HOST}:8080"
+DB_HOST=${DB_HOST}
 DB_PORT="5432"
 DB_NAME="project-sem-1"
 DB_USER="validator"

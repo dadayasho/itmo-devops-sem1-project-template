@@ -29,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build
+    outputs:
+      host_ip: ${{ steps.get_ip.outputs.HOST_IP }}
     steps: 
       
       - name: Copy folder
@@ -62,6 +64,11 @@ jobs:
           echo 'CONFIG_PATH=/itmo-devops-sem1-project-template/config/local.yaml' >> .env
           echo "=================" 
           bash scripts/run.sh
+        
+      - name: Get an IP address
+        run: | 
+            ip_address=$(terraform output -raw ip_address)
+            echo "HOST_IP=$ip_address" >> $GITHUB_OUTPUT
 
     
   test:
@@ -69,56 +76,20 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - run
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_DB: project-sem-1
-          POSTGRES_USER: validator
-          POSTGRES_PASSWORD: val1dat0r
-        ports:
-          - 5432:5432
-        # Добавляем volume для сохранения данных
-        volumes:
-          - postgres_data:/var/lib/postgresql/data
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.23'
+    
 
     - name: Make scripts executable
-      run: |
-        chmod +x scripts/prepare.sh
-        chmod +x scripts/run.sh
-        chmod +x scripts/tests.sh
-
-    - name: Prepare environment
-      run: ./scripts/prepare.sh
-
-    - name: Run application
-      run: ./scripts/run.sh
-      env:
-        POSTGRES_HOST: localhost
-        POSTGRES_PORT: 5432
-        POSTGRES_DB: project-sem-1
-        POSTGRES_USER: validator
-        POSTGRES_PASSWORD: val1dat0r
+      run: chmod +x scripts/tests.sh
 
     - name: Test Level 1
       id: test-level-1
       continue-on-error: true
       run: ./scripts/tests.sh 1
       env:
-        POSTGRES_HOST: localhost
+        DB_HOST: ${{ needs.run.outputs.host_ip }}
         POSTGRES_PORT: 5432
         POSTGRES_DB: project-sem-1
         POSTGRES_USER: validator
@@ -129,7 +100,7 @@ jobs:
       continue-on-error: true
       run: ./scripts/tests.sh 2
       env:
-        POSTGRES_HOST: localhost
+        DB_HOST: ${{ needs.run.outputs.host_ip }}
         POSTGRES_PORT: 5432
         POSTGRES_DB: project-sem-1
         POSTGRES_USER: validator
@@ -140,7 +111,7 @@ jobs:
       continue-on-error: true
       run: ./scripts/tests.sh 3
       env:
-        POSTGRES_HOST: localhost
+        DB_HOST: ${{ needs.run.outputs.host_ip }}
         POSTGRES_PORT: 5432
         POSTGRES_DB: project-sem-1
         POSTGRES_USER: validator

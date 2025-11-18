@@ -37,7 +37,7 @@ ssh -o StrictHostKeyChecking=no -l maxim ${HOST_IP} "
   sudo apt-get install docker-compose-plugin -y
 "
 # ====== Копируем переменные на сервер ======
-scp .env maxim@${HOST_IP}:/home/maxim/.env
+scp ../.env maxim@${HOST_IP}:/home/maxim/.env
 
 # ====== Docker compose на сервер ======
 scp ../docker-compose.yml maxim@${HOST_IP}:/home/maxim/docker-compose.yml

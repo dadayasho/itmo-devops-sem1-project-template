@@ -54,7 +54,7 @@ echo "====== ПОДКЛЮЧАЕМСЯ ПО SHH ======"
 ssh-keyscan -H "$HOST_IP" >> ~/.ssh/known_hosts
 
 echo "====== Устанавливае DOCKER ======"
-ssh -o StrictHostKeyChecking=no -l yc-user $HOST_IP "
+ssh -o StrictHostKeyChecking=no -l yc-user "$HOST_IP" "
   sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release -y
   sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
   sudo echo \"deb [arch=\$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
@@ -62,11 +62,11 @@ ssh -o StrictHostKeyChecking=no -l yc-user $HOST_IP "
   sudo apt-get install docker-ce docker-ce-cli containerd.io -y
   sudo apt-get install docker-compose-plugin -y
 "
-ecgo "====== Копируем переменные на сервер ======="
-scp ../.env yc-user@$HOST_IP:/home/yc-user/.env
+echo "====== Копируем переменные на сервер ======="
+scp .env yc-user@$HOST_IP:/home/yc-user/.env
 
 echo "====== Docker compose на сервер ======"
-scp ../docker-compose.yml yc-user@$HOST_IP:/home/yc-user/docker-compose.yml
+scp docker-compose.yml yc-user@$HOST_IP:/home/yc-user/docker-compose.yml
 
 echo "====== Поднимаем бэкэнд ======"
 ssh -o StrictHostKeyChecking=no -l yc-user $HOST_IP "
@@ -80,4 +80,4 @@ ssh -o StrictHostKeyChecking=no -l yc-user $HOST_IP "
 
 echo "Передача IP"
 echo "HOST_IP=$HOST_IP" >> $GITHUB_OUTPUT
-echo "$HOST_IP"
+echo $HOST_IP

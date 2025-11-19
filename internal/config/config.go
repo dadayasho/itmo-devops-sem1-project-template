@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
-	//"github.com/joho/godotenv"
 )
 
 type Config struct {

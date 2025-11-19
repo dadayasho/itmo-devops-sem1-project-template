@@ -2,10 +2,8 @@ package tools
 
 import (
 	"archive/tar"
-	"io"
-
-	//"log"
 	"archive/zip"
+	"io"
 	"os"
 	"path/filepath"
 )

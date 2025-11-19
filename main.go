@@ -148,7 +148,7 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// подключаемся к бд
-	db, error := database.СonnectDB()
+	db, error := database.ConnectDB()
 	if error != nil {
 		http.Error(w, "Не удалось подключиться к базе данных: "+error.Error(), http.StatusInternalServerError)
 	}
@@ -280,7 +280,7 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// подключение к бд
-	db, err := database.СonnectDB()
+	db, err := database.ConnectDB()
 	if err != nil {
 		http.Error(w, "Не удалось подключиться к базе данных: "+err.Error(), http.StatusInternalServerError)
 		return

@@ -1,18 +1,14 @@
 package database
 
 import (
-	//"fmt"
 	"context"
 	"fmt"
-
-	//"log"
 	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	//"github.com/joho/godotenv"
 )
 
-func СonnectDB() (*pgxpool.Pool, error) {
+func ConnectDB() (*pgxpool.Pool, error) {
 	user := os.Getenv("POSTGRES_USER")
 	password := os.Getenv("POSTGRES_PASSWORD")
 	ip := os.Getenv("POSTGRES_HOST")

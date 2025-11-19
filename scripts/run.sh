@@ -37,7 +37,7 @@ HOST_ID=$(yc compute instance create \
   --memory 2  \
   --network-interface subnet-id=${YC_SUBNET_ID} \
   --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-2204-lts,size=20 \
-  --ssh-key ~/.ssh/id_ed25519.pub --format yaml | grep '^id:' | sed 's/id: //')
+  --ssh-key ~/.ssh/id_rsa.pub --format yaml | grep '^id:' | sed 's/id: //')
 
 
 HOST_IP=$(yc vpc address create --name my-address --external-ipv4 zone=ru-central1-a --format yaml | grep 'address:' | sed -n 's/^[[:space:]]*address: //p')

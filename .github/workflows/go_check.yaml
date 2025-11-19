@@ -65,6 +65,7 @@ jobs:
         YC_FOLDER_ID: ${{ secrets.FOLDER_ID }}
         YC_SUBNET_ID: ${{ secrets.YC_SUBNET_ID }}
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
 
     - name: Test Level 1
       id: test-level-1

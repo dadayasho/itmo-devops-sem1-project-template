@@ -1,5 +1,5 @@
 .env
 /pgdata
-/terraform/var.tfvars
+text
 /terraform/terraform.tfstate.backup
 /terraform/.terraform

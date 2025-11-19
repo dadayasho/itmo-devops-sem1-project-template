@@ -62,7 +62,7 @@ CREATE_OUTPUT=$(yc compute instance create \
   --platform standard-v3 --cores 2 --memory 2 \
   --network-interface subnet-id="$YC_SUBNET_ID" \
   --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-2204-lts,size=20 \
-  --ssh-key ~/.ssh/id_ed25519.pub --format yaml 2>&1) || CREATED=0
+  --ssh-key ~/.ssh/id_rsa.pub --format yaml 2>&1) || CREATED=0
 
 if [ "$CREATED" = "0" ]; then
   if echo "$CREATE_OUTPUT" | grep -q 'Instance with name.*already exists'; then

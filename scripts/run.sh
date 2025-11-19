@@ -27,26 +27,54 @@ chmod 644 ~/.ssh/id_rsa.pub
 
 echo "======= Создаем виртуалку ========"
 
-HOST_ID=$(yc compute instance create \
+get_vm_info() {
+  yc compute instance list --folder-id "$YC_FOLDER_ID" --format yaml | \
+    awk -v vmname="go-server-vm" '
+      $0 ~ "name: " vmname {found=1}
+      found && $1 == "id:" {vm_id=$2}
+      found && $1 == "network_interfaces:" {net=1}
+      net && $1 == "primary_v4_address:" {getline; ip=$2; print vm_id; print ip; exit}
+    '
+}
+
+# Попытка создания ВМ с перехватом вывода
+CREATE_OUTPUT=$(yc compute instance create \
   --cloud-id ${YC_CLOUD_ID} \
   --folder-id ${YC_FOLDER_ID} \
   --zone ru-central1-a \
   --name go-server-vm \
-  --platform standard-v3 \
-  --cores 2 \
-  --memory 2  \
+  --platform standard-v3 --cores 2 --memory 2 \
   --network-interface subnet-id=${YC_SUBNET_ID} \
   --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-2204-lts,size=20 \
-  --ssh-key ~/.ssh/id_rsa.pub --format yaml | grep '^id:' | sed 's/id: //')
+  --ssh-key ~/.ssh/id_rsa.pub --format yaml 2>&1) || CREATED=0
 
+if [ "$CREATED" = "0" ]; then
+  # Проверяем, есть ли ошибка, что такая ВМ уже существует
+  echo "$CREATE_OUTPUT" | grep -q 'Instance with name.*already exists'
+  if [ $? -eq 0 ]; then
+    echo "VM уже существует, получаем IP..."
+    read EXIST_VM_ID EXIST_IP <<< $(get_vm_info)
+    HOST_IP="$EXIST_IP"
+    HOST_ID="$EXIST_VM_ID"
+  else
+    echo "Ошибка создания VM:"
+    echo "$CREATE_OUTPUT"
+    exit 1
+  fi
+else
+  HOST_ID=$(echo "$CREATE_OUTPUT" | grep '^id:' | sed 's/id: //')
+  echo "VM создана с ID=$HOST_ID"
+  # Создаём IP
+  HOST_IP=$(yc vpc address create --name "$IP_NAME" --external-ipv4 zone="$ZONE" --format yaml | grep 'address:' | sed -n 's/^[[:space:]]*address:[[:space:]]*//p')
+  echo "IP создан: $HOST_IP"
+  # Привязываем IP к VM
+  yc compute instance add-one-to-one-nat --id="$HOST_ID" --network-interface-index=0 --nat-address="$HOST_IP"
+  echo "IP $HOST_IP добавлена к ВМ с id $HOST_ID"
+fi
 
-HOST_IP=$(yc vpc address create --name my-address --external-ipv4 zone=ru-central1-a --format yaml | grep 'address:' | sed -n 's/^[[:space:]]*address:[[:space:]]*//p')
-echo $HOST_IP
+echo "HOST_ID: $HOST_ID"
+echo "HOST_IP: $HOST_IP"
 
-yc compute instance add-one-to-one-nat \
-  --id=$HOST_ID \
-  --network-interface-index=0\
-  --nat-address=$HOST_IP
 
 echo "====== ПОДКЛЮЧАЕМСЯ ПО SHH ======"
 

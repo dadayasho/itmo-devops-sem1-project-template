@@ -4,6 +4,9 @@ echo "======= Устанавливаем yc ======="
 curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -a
 export PATH="$HOME/yandex-cloud/bin:$PATH"
 
+echo "=======Авторизуемся в yc======="
+
+yc config set token ${YC_TOKEN}
 echo "======= Добавляем переменные окружения в .env ======="
 
 echo "POSTGRES_USER=${POSTGRES_USER}" > .env

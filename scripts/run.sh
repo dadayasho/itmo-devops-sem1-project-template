@@ -55,7 +55,7 @@ get_ip() {
 
 CREATED=1
 CREATE_OUTPUT=$(yc compute instance create \
-  --cloud-id b1gtthkbpv7pj92rkj82 \
+  --cloud-id "$YC_CLOUD_ID" \
   --folder-id "$YC_FOLDER_ID" \
   --zone ru-central1-a \
   --name go-server-vm \
@@ -78,7 +78,7 @@ if [ "$CREATED" = "0" ]; then
 else
   VM_ID=$(echo "$CREATE_OUTPUT" | grep '^id:' | sed 's/id: //')
   echo "VM создана с ID=$VM_ID"
-  HOST_IP=$(yc vpc address create --name "$IP_NAME" --external-ipv4 zone="$ZONE" --format yaml | grep 'address:' | sed -n 's/^[[:space:]]*address:[[:space:]]*//p')
+  HOST_IP=$(yc vpc address create --name static-adr --external-ipv4 zone=ru-central1-a --format yaml | grep 'address:' | sed -n 's/^[[:space:]]*address:[[:space:]]*//p')
   echo "IP создан: $HOST_IP"
   yc compute instance add-one-to-one-nat --id="$VM_ID" --network-interface-index=0 --nat-address="$HOST_IP"
 fi

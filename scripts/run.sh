@@ -1,4 +1,7 @@
 #!/bin/bash
+#утилка чтоб парсить json, так как я не придумал ничего лучше для получения IP с уже готовой виртуальной машины
+echo "======= Утсанавливаем jq ========"
+sudo apt-get install jq -y
 
 echo "======= Устанавливаем yc ======="
 curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -a

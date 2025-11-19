@@ -20,14 +20,14 @@ echo "$SSH_PUBLIC_KEY" >> ~/.ssh/id_rsa.pub
 echo "======= Создаем виртуалку ========"
 
 HOST_ID=$(yc compute instance create \
-  --cloud-id b1gtthkbpv7pj92rkj82 \
-  --folder-id b1grdmsmf3ucpm9annq2 \
+  --cloud-id ${YC_CLOUD_ID} \
+  --folder-id ${YC_FOLDER_ID} \
   --zone ru-central1-a \
   --name go-server-vm \
   --platform standard-v3 \
   --cores 2 \
   --memory 2  \
-  --network-interface subnet-id=e9bgulek7pok5ebk6qls \
+  --network-interface subnet-id=${YC_SUBNET_ID} \
   --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-2204-lts,size=20 \
   --ssh-key ~/.ssh/id_ed25519.pub --format yaml | grep '^id:' | sed 's/id: //')
 
@@ -61,17 +61,21 @@ ssh -o StrictHostKeyChecking=no -l yc-user ${HOST_IP} "
   sudo apt-get install docker-compose-plugin -y
 "
 ecgo "====== Копируем переменные на сервер ======="
-scp ../.env yc-user@${HOST_IP}:/home/maxim/.env
+scp ../.env yc-user@${HOST_IP}:/home/yc-user/.env
 
 echo "====== Docker compose на сервер ======"
-scp ../docker-compose.yml yc-user@${HOST_IP}:/home/maxim/docker-compose.yml
+scp ../docker-compose.yml yc-user@${HOST_IP}:/home/yc-user/docker-compose.yml
 
 echo "====== Поднимаем бэкэнд ======"
 ssh -o StrictHostKeyChecking=no -l uc-user ${HOST_IP} "
-  cd /home/maxim
+  cd /home/yc-user
   sudo docker compose down
   sudo docker compose up -d
   sudo docker compose exec backend apt install golang-migrate
   sudo docker compose exec backend migrate -path=./migrations -database "postgresql://validator:val1dat0r@postgres:5432/project-sem-1?sslmode=disable" -verbose up 
   sudo docker compose exec backend  go run insertInDB/insert.go 
 "
+
+echo "Передача IP"
+echo "HOST_IP=$HOST_IP" >> $GITHUB_OUTPUT
+echo "$HOST_IP"

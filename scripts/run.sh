@@ -89,10 +89,11 @@ echo "HOST_IP: $HOST_IP"
 
 echo "====== ПОДКЛЮЧАЕМСЯ ПО SHH ======"
 
+sleep 80
 
 ssh-keyscan -H "$HOST_IP" >> ~/.ssh/known_hosts
 
-echo "====== Устанавливае DOCKER ======"
+echo "====== Устанавливаем DOCKER ======"
 ssh -o StrictHostKeyChecking=no -l yc-user $HOST_IP "
   sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release -y
   sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg

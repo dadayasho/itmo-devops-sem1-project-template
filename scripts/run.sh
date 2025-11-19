@@ -2,15 +2,15 @@
 
 echo "======= Устанавливаем yc ======="
 curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -a
-
+export PATH="$HOME/yandex-cloud/bin:$PATH"
 
 echo "======= Добавляем переменные окружения в .env ======="
 
-echo "POSTGRES_USER=${{ secrets.DB_USER_NAME }}" > .env
-echo "POSTGRES_PASSWORD=${{ secrets.DB_USER_PASSWORD }}" >> .env
-echo "POSTGRES_DB=${{ secrets.DB_NAME }}" >> .env
-echo "POSTGRES_PORT=${{ secrets.DB_PORT }}" >> .env
-echo "POSTGRES_HOST=${{ secrets.DB_IP }}" >> .env
+echo "POSTGRES_USER=${POSTGRES_USER}" > .env
+echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" >> .env
+echo "POSTGRES_DB=${POSTGRES_DB}" >> .env
+echo "POSTGRES_PORT=${POSTGRES_PORT}" >> .env
+echo "POSTGRES_HOST=${POSTGRES_HOST}" >> .env
 echo 'CONFIG_PATH=/itmo-devops-sem1-project-template/config/local.yaml' >> .env
 
 echo "======= Добавляем SSH ключик ======"
@@ -36,9 +36,9 @@ HOST_IP=$(yc vpc address create --name my-address --external-ipv4 zone=ru-centra
 
 
 yc compute instance add-one-to-one-nat \
-  --id=${HOST_ID} \
+  --id=$HOST_ID \
   --network-interface-index=0\
-  --nat-address=${HOST_IP}
+  --nat-address=$HOST_IP
 
 echo "====== ПОДКЛЮЧАЕМСЯ ПО SHH ======"
 mkdir -p ~/.ssh

@@ -40,7 +40,7 @@ HOST_ID=$(yc compute instance create \
   --ssh-key ~/.ssh/id_rsa.pub --format yaml | grep '^id:' | sed 's/id: //')
 
 
-HOST_IP=$(yc vpc address create --name my-address --external-ipv4 zone=ru-central1-a --format yaml | grep 'address:' | sed -n 's/^[[:space:]]*address: //p')
+HOST_IP=$(yc vpc address create --name my-address --external-ipv4 zone=ru-central1-a --format yaml | grep 'address:' | sed -n 's/^[[:space:]]*address:[[:space:]]*//p')
 echo $HOST_IP
 
 yc compute instance add-one-to-one-nat \
@@ -54,7 +54,7 @@ echo "====== ПОДКЛЮЧАЕМСЯ ПО SHH ======"
 ssh-keyscan -H "$HOST_IP" >> ~/.ssh/known_hosts
 
 echo "====== Устанавливае DOCKER ======"
-ssh -o StrictHostKeyChecking=no -l yc-user "$HOST_IP" "
+ssh -o StrictHostKeyChecking=no -l yc-user $HOST_IP "
   sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release -y
   sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
   sudo echo \"deb [arch=\$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null

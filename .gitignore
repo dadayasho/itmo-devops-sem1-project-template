@@ -1,5 +1,5 @@
 .env
 /pgdata
-text
+test.sh
 /terraform/terraform.tfstate.backup
 /terraform/.terraform

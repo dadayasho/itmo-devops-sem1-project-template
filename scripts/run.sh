@@ -17,8 +17,15 @@ echo "POSTGRES_HOST=${POSTGRES_HOST}" >> .env
 echo 'CONFIG_PATH=/itmo-devops-sem1-project-template/config/local.yaml' >> .env
 
 echo "======= Добавляем SSH ключик ======"
+mkdir -p ~/.ssh
+echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+chmod 600 ~/.ssh/id_rsa
 
-echo "$SSH_PUBLIC_KEY" >> ~/.ssh/id_rsa.pub
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_rsa
+
+echo "$SSH_PUBLIC_KEY" > ~/.ssh/id_rsa.pub
+chmod 644 ~/.ssh/id_rsa.pub
 
 echo "======= Создаем виртуалку ========"
 
@@ -44,12 +51,6 @@ yc compute instance add-one-to-one-nat \
   --nat-address=$HOST_IP
 
 echo "====== ПОДКЛЮЧАЕМСЯ ПО SHH ======"
-mkdir -p ~/.ssh
-echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-chmod 600 ~/.ssh/id_rsa
-
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/id_rsa
 
 
 ssh-keyscan -H "${HOST_IP}" >> ~/.ssh/known_hosts

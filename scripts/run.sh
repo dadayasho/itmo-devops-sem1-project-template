@@ -37,7 +37,7 @@ HOST_ID=$(yc compute instance create \
   --memory 2  \
   --network-interface subnet-id=${YC_SUBNET_ID} \
   --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-2204-lts,size=20 \
-  --ssh-key ~/.ssh/id_rsa.pub
+  --ssh-key ~/.ssh/id_rsa.pub --format yaml | grep '^id:' | sed 's/id: //')
 
 
 HOST_IP=$(yc vpc address create --name my-address --external-ipv4 zone=ru-central1-a --format yaml | grep 'address:' | sed -n 's/^[[:space:]]*address: //p')
@@ -51,10 +51,10 @@ yc compute instance add-one-to-one-nat \
 echo "====== ПОДКЛЮЧАЕМСЯ ПО SHH ======"
 
 
-ssh-keyscan -H "${HOST_IP}" >> ~/.ssh/known_hosts
+ssh-keyscan -H "$HOST_IP" >> ~/.ssh/known_hosts
 
 echo "====== Устанавливае DOCKER ======"
-ssh -o StrictHostKeyChecking=no -l yc-user ${HOST_IP} "
+ssh -o StrictHostKeyChecking=no -l yc-user $HOST_IP "
   sudo apt-get install apt-transport-https ca-certificates curl gnupg lsb-release -y
   sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
   sudo echo \"deb [arch=\$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \$(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
@@ -63,13 +63,13 @@ ssh -o StrictHostKeyChecking=no -l yc-user ${HOST_IP} "
   sudo apt-get install docker-compose-plugin -y
 "
 ecgo "====== Копируем переменные на сервер ======="
-scp ../.env yc-user@${HOST_IP}:/home/yc-user/.env
+scp ../.env yc-user@$HOST_IP:/home/yc-user/.env
 
 echo "====== Docker compose на сервер ======"
-scp ../docker-compose.yml yc-user@${HOST_IP}:/home/yc-user/docker-compose.yml
+scp ../docker-compose.yml yc-user@$HOST_IP:/home/yc-user/docker-compose.yml
 
 echo "====== Поднимаем бэкэнд ======"
-ssh -o StrictHostKeyChecking=no -l uc-user ${HOST_IP} "
+ssh -o StrictHostKeyChecking=no -l yc-user $HOST_IP "
   cd /home/yc-user
   sudo docker compose down
   sudo docker compose up -d

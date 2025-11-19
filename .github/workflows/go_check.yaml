@@ -44,7 +44,12 @@ jobs:
         chmod +x scripts/tests.sh
 
     - name: Prepare environment
-      run: ./scripts/prepare.sh
+      env:
+        DOCKER_USER: ${{ secrets.DOCKER_USER }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+        echo $DOCKER_PASSWORD | docker login -u "$DOCKER_USER" --password-stdin
+        bash scripts/prepare.sh
 
     - name: Run application
       id: run

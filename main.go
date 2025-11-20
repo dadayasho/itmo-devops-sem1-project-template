@@ -182,13 +182,13 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 		if _, err1 := time.Parse("2006-01-02", rec[4]); err1 == nil {
 			if _, err2 := strconv.ParseFloat(rec[3], 64); err2 == nil {
 				err := db.QueryRow(ctx, `
-					INSERT INTO prices (id, name, category, price, create_date)
+					INSERT INTO prices (id, name, category, price, created_at)
 					VALUES ($1, $2, $3, $4, $5)
 					ON CONFLICT (id) DO UPDATE SET
 						name = EXCLUDED.name,
 						category = EXCLUDED.category,
 						price = EXCLUDED.price,
-						create_date = EXCLUDED.create_date
+						created_at = EXCLUDED.created_at
 					RETURNING (xmax = 0) AS inserted;
 				`, rec[0], rec[1], rec[2], rec[3], rec[4]).Scan(&inserted)
 				if err != nil {
@@ -298,7 +298,7 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
-	if err := writer.Write([]string{"id", "name", "category", "price", "create_date"}); err != nil {
+	if err := writer.Write([]string{"id", "name", "category", "price", "created_at"}); err != nil {
 		http.Error(w, "Ошибка записи заголовков CSV: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -306,15 +306,15 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 	// получение данных с таблицы
 	ctx := context.Background()
 	rows, err := db.Query(ctx, `
-		SELECT id, name, category, price, create_date
+		SELECT id, name, category, price, created_at
 		FROM prices
 		WHERE 
 		price >= $1 AND price <= $2
-		AND create_date BETWEEN $3 AND $4
+		AND created_at BETWEEN $3 AND $4
 		AND name IS NOT NULL AND name <> ''
 		AND category IS NOT NULL AND category <> ''
 		AND price IS NOT NULL
-		AND create_date IS NOT NULL
+		AND created_at IS NOT NULL
 		`, int_min, int_max, dateStart, dateEnd)
 	if err != nil {
 		http.Error(w, "Не удалось считать данные из таблицы: "+err.Error(), http.StatusInternalServerError)
@@ -326,9 +326,9 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 		var id int
 		var name, category string
 		var price float64
-		var create_date time.Time
+		var created_at time.Time
 
-		if err := rows.Scan(&id, &name, &category, &price, &create_date); err != nil {
+		if err := rows.Scan(&id, &name, &category, &price, &created_at); err != nil {
 			http.Error(w, "Ошибка при чтении данных из базы: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -338,7 +338,7 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 			name,
 			category,
 			fmt.Sprintf("%.2f", price),
-			create_date.Format("2006-01-02"),
+			created_at.Format("2006-01-02"),
 		}); err != nil {
 			http.Error(w, "Ошибка записи CSV: "+err.Error(), http.StatusInternalServerError)
 			return

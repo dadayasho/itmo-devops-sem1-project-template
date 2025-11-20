@@ -1,4 +1,4 @@
-FROM golang:alpine AS builder 
+FROM golang:1.24.0 AS builder 
 
 RUN mkdir -p /tmp/preextracted
 RUN mkdir -p /tmp/extracted

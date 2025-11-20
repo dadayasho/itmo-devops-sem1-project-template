@@ -29,7 +29,7 @@ func importCSVWithUpsert(pool *pgxpool.Pool, filePath string) error {
 
 	for _, rec := range records[1:] {
 		_, err := pool.Exec(ctx, `
-            INSERT INTO prices (id, name, category, price, create_date)
+            INSERT INTO prices (id, name, category, price, created_at)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,

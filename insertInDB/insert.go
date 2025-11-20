@@ -35,7 +35,7 @@ func importCSVWithUpsert(pool *pgxpool.Pool, filePath string) error {
                 name = EXCLUDED.name,
                 category = EXCLUDED.category,
                 price = EXCLUDED.price,
-                create_date = EXCLUDED.create_date
+                created_at = EXCLUDED.created_at
         `, rec[0], rec[1], rec[2], rec[3], rec[4])
 		if err != nil {
 			return fmt.Errorf("failed to insert record %v: %w", rec, err)

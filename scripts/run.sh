@@ -112,12 +112,15 @@ echo "====== Поднимаем бэкэнд ======"
 ssh -o StrictHostKeyChecking=no -l yc-user $HOST_IP "
   cd /home/yc-user
   sudo docker compose down
+  sleep 5
+  sudo docker rmi tonysoprano228/go-server:latest
   sudo docker compose up -d
+  
   sleep 15
-  sudo docker compose exec backend apt install golang-migrate
-  sleep 15
+  echo "======= Выполняем миграции ======= "
   sudo docker compose exec backend migrate -path=./migrations -database "postgresql://validator:val1dat0r@postgres:5432/project-sem-1?sslmode=disable" -verbose up 
   sleep 15
+  echo "======= Вставляем значения ======= "
   sudo docker compose exec backend  go run insertInDB/insert.go 
 "
 

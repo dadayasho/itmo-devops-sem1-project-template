@@ -65,7 +65,8 @@ func main() {
 	}
 
 	//открытие соtдинения с бд
-	db, error := database.ConnectDB()
+	var error error
+	db, error = database.ConnectDB()
 	if error != nil {
 		log.Error("DB connection failed",
 			slog.String("env", cfg.Env),

@@ -119,11 +119,6 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 	}
 	//ограничиваем размер файла 10mb
 
-	_, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "File too large or error reading", http.StatusRequestEntityTooLarge)
-		return
-	}
 	maxarchsize := int64(10 << 20)
 	r.Body = http.MaxBytesReader(w, r.Body, maxarchsize)
 

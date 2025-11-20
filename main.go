@@ -19,11 +19,15 @@ import (
 	database "itmo-devops-sem1-project-template/internal/db"
 	findcsv "itmo-devops-sem1-project-template/internal/findcsv"
 	unpackage "itmo-devops-sem1-project-template/internal/tools"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
 	envLocal = "local"
 )
+
+var db *pgxpool.Pool
 
 type InsertResponse struct {
 	TotalCount      int `json:"total_count"`
@@ -60,17 +64,16 @@ func main() {
 		Handler:     loggedMux,
 	}
 
-	//открытие содеинения с бд
-	//db, error := database.СonnectDB(".env")
-	//if error != nil {
-	//	log.Error("DB connection failed",
-	//		slog.String("env", cfg.Env),
-	//		slog.String("error", error.Error()))
-
-	//} else {
-	//	log.Info("Connetion to db is success", slog.String("env", cfg.Env))
-	//}
-	//defer db.Close()
+	//открытие соtдинения с бд
+	db, error := database.ConnectDB()
+	if error != nil {
+		log.Error("DB connection failed",
+			slog.String("env", cfg.Env),
+			slog.String("error", error.Error()))
+	} else {
+		log.Info("Connetion to db is success", slog.String("env", cfg.Env))
+	}
+	defer db.Close()
 
 	//это запуск сервера
 	log.Info("server listening", slog.String("addr", cfg.Address))
@@ -104,10 +107,6 @@ func LoggingMiddleware(log *slog.Logger, next http.Handler) http.Handler {
 
 // ручка на отправку файлов
 func UploadOnServer(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Only POST method allowed", http.StatusMethodNotAllowed)
-		return
-	}
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -117,6 +116,16 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Недоступный тип переданых данных", http.StatusInternalServerError)
 		return
 	}
+	//ограничиваем размер файла 10mb
+
+	_, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "File too large or error reading", http.StatusRequestEntityTooLarge)
+		return
+	}
+	maxarchsize := int64(10 << 20)
+	r.Body = http.MaxBytesReader(w, r.Body, maxarchsize)
+
 	//определяем тип передаваемого архива
 	switch fileType {
 	case "tar":
@@ -128,7 +137,7 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 	default:
 		buf, err := io.ReadAll(r.Body)
 		if err != nil {
-			http.Error(w, "Failed to read body: "+err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Файл очень большой: "+err.Error(), http.StatusRequestEntityTooLarge)
 			return
 		}
 		readerAt := bytes.NewReader(buf)
@@ -148,11 +157,11 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// подключаемся к бд1
-	db, error := database.ConnectDB()
-	if error != nil {
-		http.Error(w, "Не удалось подключиться к базе данных: "+error.Error(), http.StatusInternalServerError)
-	}
-	defer db.Close()
+	//db, error := database.ConnectDB()
+	//if error != nil {
+	//	http.Error(w, "Не удалось подключиться к базе данных: "+error.Error(), http.StatusInternalServerError)
+	//}
+	//defer db.Close()
 
 	// вставка в cсожержимого архива в бд с подсчетом по условию
 	f, err := os.Open(csvpath)
@@ -242,10 +251,6 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 
 // ручка для получения файлов
 func GetTheInfo(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Only GET method allowed", http.StatusMethodNotAllowed)
-		return
-	}
 
 	// считываем параметры из запроса
 	dateStart := r.URL.Query().Get("start")
@@ -280,12 +285,12 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// подключение к бд
-	db, err := database.ConnectDB()
-	if err != nil {
-		http.Error(w, "Не удалось подключиться к базе данных: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
+	//db, err := database.ConnectDB()
+	//if err != nil {
+	//	http.Error(w, "Не удалось подключиться к базе данных: "+err.Error(), http.StatusInternalServerError)
+	//	return
+	//}
+	//defer db.Close()
 
 	// создание файла csv
 	file, err := os.Create("/tmp/preextracted/data.csv")

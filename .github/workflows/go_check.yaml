@@ -72,7 +72,7 @@ jobs:
       continue-on-error: true
       run: ./scripts/tests.sh 1
       env:
-        POSTGRES_HOST: ${{ steps.run.outputs.HOST_IP }}
+        HOST: ${{ steps.run.outputs.HOST_IP }}
         POSTGRES_PORT: 5432
         POSTGRES_DB: project-sem-1
         POSTGRES_USER: validator
@@ -83,7 +83,7 @@ jobs:
       continue-on-error: true
       run: ./scripts/tests.sh 2
       env:
-        POSTGRES_HOST: ${{ steps.run.outputs.HOST_IP }}
+        HOST: ${{ steps.run.outputs.HOST_IP }}
         POSTGRES_PORT: 5432
         POSTGRES_DB: project-sem-1
         POSTGRES_USER: validator
@@ -94,7 +94,7 @@ jobs:
       continue-on-error: true
       run: ./scripts/tests.sh 3
       env:
-        POSTGRES_HOST: ${{ steps.run.outputs.HOST_IP }}
+        HOST: ${{ steps.run.outputs.HOST_IP }}
         POSTGRES_PORT: 5432
         POSTGRES_DB: project-sem-1
         POSTGRES_USER: validator

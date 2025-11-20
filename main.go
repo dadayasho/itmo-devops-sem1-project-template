@@ -147,7 +147,7 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// подключаемся к бд
+	// подключаемся к бд1
 	db, error := database.ConnectDB()
 	if error != nil {
 		http.Error(w, "Не удалось подключиться к базе данных: "+error.Error(), http.StatusInternalServerError)

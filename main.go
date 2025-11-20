@@ -351,7 +351,7 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	archive, err := os.Create("/tmp/preextracted/archive.zip")
+	archive, err := os.Create("/tmp/preextracted/response.zip")
 	if err != nil {
 		http.Error(w, "Ошибка создания архива: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -393,7 +393,7 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, err = os.Open("/tmp/preextracted/archive.zip")
+	file, err = os.Open("/tmp/preextracted/response.zip")
 	if err != nil {
 		http.Error(w, "Ошибка получения архива", http.StatusInternalServerError)
 		return

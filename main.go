@@ -155,14 +155,7 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ошибка подключения к бд", http.StatusInternalServerError)
 		return
 	}
-	// подключаемся к бд1
-	//db, error := database.ConnectDB()
-	//if error != nil {
-	//	http.Error(w, "Не удалось подключиться к базе данных: "+error.Error(), http.StatusInternalServerError)
-	//}
-	//defer db.Close()
 
-	// вставка в cсожержимого архива в бд с подсчетом по условию
 	f, err := os.Open(csvpath)
 	if err != nil {
 		http.Error(w, "Не удалось прочитать файл из архива(1): "+err.Error(), http.StatusInternalServerError)
@@ -175,77 +168,82 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Не удалось прочитать файл из архива(2): "+err.Error(), http.StatusInternalServerError)
 	}
 
-	ctx := context.Background()
+	ctx := r.Context()
+	var totalCount, totalItems, duplicatesCount int
+	var totalPrice float64
 
-	// переопределяем счетчики
-	total_count := 0
-	duplicates_count := 0
-	total_items := 0
-	total_categories := 0
-
-	// логика набивания данных
-	var inserted bool
 	categories := make(map[string]struct{})
-	for _, rec := range records {
-		if _, err1 := time.Parse("2006-01-02", rec[4]); err1 == nil {
-			if _, err2 := strconv.ParseFloat(rec[3], 64); err2 == nil {
-				err := db.QueryRow(ctx, `
-					INSERT INTO prices (id, name, category, price, create_date)
-					VALUES ($1, $2, $3, $4, $5)
-					ON CONFLICT (id) DO UPDATE SET
-						name = EXCLUDED.name,
-						category = EXCLUDED.category,
-						price = EXCLUDED.price,
-						create_date = EXCLUDED.create_date
-					RETURNING (xmax = 0) AS inserted;
-				`, rec[0], rec[1], rec[2], rec[3], rec[4]).Scan(&inserted)
-				if err != nil {
-				}
-				if inserted {
-					total_items++
-					if _, exists := categories[rec[1]]; !exists {
-						categories[rec[1]] = struct{}{}
-						total_categories++
-					}
-				} else {
-					duplicates_count++
-				}
-				total_count++
-			} else {
-				total_count++
-			}
-		} else {
-			total_count++
-		}
-
-	}
-
-	// подсчет тотальной цены
-	var total float64
-	err = db.QueryRow(ctx, "SELECT SUM(price) FROM prices").Scan(&total)
+	tx, err := db.Begin(ctx)
 	if err != nil {
-		http.Error(w, "Ошибка подсчета суммы:"+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Ошибка создания транзакции: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	var total_price int = int(total)
+	// закрытие транзакции через дефер
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback(ctx)
+			panic(p)
+		}
+	}()
+	stmt := `
+      INSERT INTO prices (id, name, category, price, create_date)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        category = EXCLUDED.category,
+        price = EXCLUDED.price,
+        create_date = EXCLUDED.create_date
+      RETURNING (xmax = 0) AS inserted;
+    `
 
-	// очистка директории с архивом
+	for _, rec := range records {
+		totalCount++
+		// проверка даты
+		if _, err := time.Parse("2006-01-02", rec[4]); err != nil {
+			continue
+		}
+		// проверка ценыф
+		price, err := strconv.ParseFloat(rec[3], 64)
+		if err != nil {
+			continue
+		}
+		var inserted bool
+		err = tx.QueryRow(ctx, stmt, rec[0], rec[1], rec[2], price, rec[4]).Scan(&inserted)
+		if err != nil {
+			_ = tx.Rollback(ctx)
+			http.Error(w, "Ошибка вставки значения: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if inserted {
+			totalItems++
+			categories[rec[2]] = struct{}{}
+			totalPrice += price
+		} else {
+			duplicatesCount++
+		}
+	}
+	// коммит транзакции
+	if err := tx.Commit(ctx); err != nil {
+		http.Error(w, "Ошибка коммита транзакции:"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// удаление файла из временной директрии
 	entries, _ := os.ReadDir("/tmp/extracted")
 	for _, entry := range entries {
 		_ = os.RemoveAll(filepath.Join("/tmp/extracted", entry.Name()))
 	}
 
-	// создание ответа
-	body, _ := json.Marshal(&InsertResponse{
-		TotalCount:      total_count,
-		DuplicatesCount: duplicates_count,
-		TotalItems:      total_items,
-		TotalCategories: total_categories,
-		TotalPrice:      total_price,
-	})
-
+	// ответ
+	res := InsertResponse{
+		TotalCount:      totalCount,
+		DuplicatesCount: duplicatesCount,
+		TotalItems:      totalItems,
+		TotalCategories: len(categories),
+		TotalPrice:      int(totalPrice),
+	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(body)
+	json.NewEncoder(w).Encode(res)
 }
 
 // ручка для получения файлов

@@ -3,7 +3,6 @@ package main
 import (
 	"archive/zip"
 	"bytes"
-	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -178,11 +177,13 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ошибка создания транзакции: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// закрытие транзакции через дефер
+	// закрытие транзакции если что-то пойдет не так
 	defer func() {
 		if p := recover(); p != nil {
 			_ = tx.Rollback(ctx)
 			panic(p)
+		} else if err != nil {
+			_ = tx.Rollback(ctx)
 		}
 	}()
 	stmt := `
@@ -281,15 +282,6 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// подключение к бд
-	//db, err := database.ConnectDB()
-	//if err != nil {
-	//	http.Error(w, "Не удалось подключиться к базе данных: "+err.Error(), http.StatusInternalServerError)
-	//	return
-	//}
-	//defer db.Close()
-
-	// создание файла csv
 	file, err := os.Create("/tmp/preextracted/data.csv")
 	if err != nil {
 		http.Error(w, "Ошибка создания файла csv: "+err.Error(), http.StatusInternalServerError)
@@ -298,32 +290,41 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	writer := csv.NewWriter(file)
-	defer writer.Flush()
 
-	if err := writer.Write([]string{"id", "name", "category", "price", "create_date"}); err != nil {
-		http.Error(w, "Ошибка записи заголовков CSV: "+err.Error(), http.StatusInternalServerError)
+	ctx := r.Context()
+	//создание транзакции
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		http.Error(w, "Ошибка создания транзакции: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	// закрытие транзакции если что-то пойдет не так
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback(ctx)
+			panic(p)
+		} else if err != nil {
+			_ = tx.Rollback(ctx)
+		}
+	}()
 
-	// получение данных с таблицы
-	ctx := context.Background()
-	rows, err := db.Query(ctx, `
+	rows, err := tx.Query(ctx, `
 		SELECT id, name, category, price, create_date
 		FROM prices
 		WHERE 
-		price >= $1 AND price <= $2
-		AND create_date BETWEEN $3 AND $4
-		AND name IS NOT NULL AND name <> ''
-		AND category IS NOT NULL AND category <> ''
-		AND price IS NOT NULL
-		AND create_date IS NOT NULL
-		`, int_min, int_max, dateStart, dateEnd)
+			price >= $1 AND price <= $2
+			AND create_date BETWEEN $3 AND $4
+			AND name IS NOT NULL AND name <> ''
+			AND category IS NOT NULL AND category <> ''
+			AND price IS NOT NULL
+			AND create_date IS NOT NULL
+		`,
+		int_min, int_max, dateStart, dateEnd)
 	if err != nil {
 		http.Error(w, "Не удалось считать данные из таблицы: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
-
 	for rows.Next() {
 		var id int
 		var name, category string
@@ -345,6 +346,17 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Ошибка записи CSV: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
+	}
+
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Ошибка при итерации по строкам: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// коммит транзакции транзакции
+	if err := tx.Commit(ctx); err != nil {
+		http.Error(w, "Ошибка коммита транзакции: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	writer.Flush()

@@ -1,4 +1,4 @@
-# Финальный проект 1 семестра
+# Финальный проект 1 семестра(СЛОЖНЫЙ УРОВЕНЬ)
 
 REST API сервис для загрузки и выгрузки данных о ценах.
 
@@ -49,11 +49,11 @@ docker push `<your>/<tag>`
 Создаем `.env` файл в директории куда кладем следующие переменные
 ```
 CONFIG_PATH = "<your_value>"
-DB_USER_NAME = "<your_value>"
-DB_USER_PASSWORD = "<your_value>"
-DB_IP = "<your_value>"
-DB_NAME = "<your_value>"
-DB_PORT = "<your_value>"
+POSTGRES_USER = "<your_value>"
+POSTGES_PASSWORD = "<your_value>"
+POSTGRES_HOST = "<your_value>"
+POSTGRES_DB = "<your_value>"
+POSTGRES_PORT = "<your_value>"
 ```
 
 Финальная часть шага - поднятие docker compose
@@ -74,29 +74,23 @@ sudo docker compose exec backend  go run insertInDB/insert.go
 Следует создать `.env` файл и поместить туда следущие переменные:
 ```
 CONFIG_PATH = "<your_value>"
-DB_USER_NAME = "<your_value>"
-DB_USER_PASSWORD = "<your_value>"
-DB_IP = "<your_value>"
-DB_NAME = "<your_value>"
-DB_PORT = "<your_value>"
-AWS_ACCESS_KEY_ID = "<your_value>"
-AWS_SECRET_ACCESS_KEY = "<your_value>"
+POSTGRES_USER = "<your_value>"
+POSTGES_PASSWORD = "<your_value>"
+POSTGRES_HOST = "<your_value>"
+POSTGRES_DB = "<your_value>"
+POSTGRES_PORT = "<your_value>"
 YC_TOKEN = "<your_value>"
 YC_CLOUD_ID = "<your_value>"
 YC_FOLDER_ID = "<your_value>"
 ```
+> [!IMPORTANT]
+> - `YC_TOKEN` - токен для доступа в облако
+> - `YC_CLOUD_ID` - id облака
+> - `YC_FOLDER_ID` - id хранилища в облаке
 
-> Следует создать бакет в облаке, и дать права сервисному аккаунту на их редактирование. Получить статические клучи доступа.
-> `AWS_ACCESS_KEY_ID` - токен от сервисного аккаунта
-> `AWS_SECRET_ACCESS_KEY` - секретный ключ от сервисного аккаунта
-> `YC_TOKEN` - токен для доступа в облако
-> `YC_CLOUD_ID` - id облака
-> `YC_FOLDER_ID` - id хранилища в облаке
-
-Это все нужно для реализации хранения state файла состояния ресурсов в облаке в бакет, чтобы обращаться к нему в момент создания ресурсов во избежании коллизии.
 ---
-Далее следует установить терраформ запустить скрипт `script/run.sh` чтобы собрать образ и оправить его на ваш удаленный репозиторий.
-Указать ваш репозиторий в 20 строке файла `docker-compose.yml` 
+- Далее следует `yc`  запустить скрипт `script/run.sh` чтобы собрать образ и оправить его на ваш удаленный репозиторий.
+- Указать ваш репозиторий в 20 строке файла `docker-compose.yml` 
 После этого следует запустить скрипт `run.sh` - скрипт, который создает виртуальную машину со статическим ip адрессов в облаке.
 Этот скрипт создает ВМ, устанавливает docker compose и поднимает сервер на порту `8080`, выполняет миграции и заполняет таблицу данными.
 
@@ -106,7 +100,7 @@ YC_FOLDER_ID = "<your_value>"
 
 Директория `sample_data` - это пример директории, которая является разархивированной версией файла `sample_data.zip`
 
-Сервер был протестирован 2 разными тестами.
+Сервер был протестирован разными тестами.
 
 1. Через Postman
 ---

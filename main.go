@@ -181,7 +181,7 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if p := recover(); p != nil {
 			_ = tx.Rollback(ctx)
-			panic(p)
+
 		} else if err != nil {
 			_ = tx.Rollback(ctx)
 		}
@@ -198,6 +198,10 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
     `
 
 	for _, rec := range records {
+		if len(rec) < 5 {
+			totalCount++
+			continue
+		}
 		totalCount++
 		// проверка даты
 		if _, err := time.Parse("2006-01-02", rec[4]); err != nil {

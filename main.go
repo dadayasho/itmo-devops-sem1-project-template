@@ -197,11 +197,11 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
       RETURNING (xmax = 0) AS inserted;
     `
 
-	for _, rec := range records {
-		if len(rec) < 5 {
-			totalCount++
-			continue
-		}
+	for _, rec := range records[1:] {
+		//if len(rec) < 5 {
+		//	totalCount++
+		//	continue
+		//}
 		totalCount++
 		// проверка даты
 		if _, err := time.Parse("2006-01-02", rec[4]); err != nil {

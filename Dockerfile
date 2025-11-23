@@ -10,7 +10,7 @@ COPY . .
 RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o itmo-devops-sem1-project-template .
 
-FROM alpine:latest AS runner
+FROM golang:alpine AS runner
 
 WORKDIR /itmo-devops-sem1-project-template
 

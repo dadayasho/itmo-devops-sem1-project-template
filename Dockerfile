@@ -6,7 +6,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+RUN CGO_ENABLED=0 GOOS=linux go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o itmo-devops-sem1-project-template .
 
 FROM golang:alpine AS runner

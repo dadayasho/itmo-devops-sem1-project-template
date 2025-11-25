@@ -309,6 +309,11 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
   		AND ($2::numeric IS NULL OR price <= $2::numeric)
   		AND ($3::date IS NULL OR create_date >= $3::date)
   		AND ($4::date IS NULL OR create_date <= $4::date)
+		AND name IS NOT NULL AND name <> ''
+		AND category IS NOT NULL AND category <> ''
+		AND price IS NOT NULL
+		AND create_date IS NOT NULL
+
     `,
 		intMin, intMax, dateStart, dateEnd)
 	if err != nil {

@@ -190,8 +190,8 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 	stmt := `
       INSERT INTO prices (name, category, price, create_date)
 	  VALUES ($1, $2, $3, $4)
-      ON CONFLICT (name, category, price, create_date) DO NOTHING
-      RETURNING TRUE;
+	  ON CONFLICT (name, category, price, create_date) DO UPDATE SET name = EXCLUDED.name
+	  RETURNING true;
     `
 
 	for _, rec := range records[1:] {
@@ -213,7 +213,7 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Ошибка вставки значения: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		// Вставка успешна
+		// ставка успешна
 		totalItems++
 		categories[rec[2]] = struct{}{}
 		totalPrice += price

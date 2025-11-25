@@ -45,7 +45,6 @@ func importCSVWithUpsert(pool *pgxpool.Pool, filePath string) error {
     `, rec[1], rec[2], price, date)
 
 	}
-
 	return nil
 }
 

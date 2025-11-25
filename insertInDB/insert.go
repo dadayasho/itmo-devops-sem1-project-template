@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"encoding/csv"
-	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"time"
 
 	database "itmo-devops-sem1-project-template/internal/db"
 
@@ -28,15 +29,25 @@ func importCSVWithUpsert(pool *pgxpool.Pool, filePath string) error {
 	ctx := context.Background()
 
 	for _, rec := range records[1:] {
-		_, err := pool.Exec(ctx, `
-            INSERT INTO prices (name, category, price, create_date)
-	  		VALUES ($1, $2, $3, $4)
-      		ON CONFLICT (name, category, price, create_date) DO NOTHING;
-        `, rec[1], rec[2], rec[3], rec[4])
+		price, err := strconv.ParseFloat(rec[3], 64)
 		if err != nil {
-			return fmt.Errorf("failed to insert record %v: %w", rec, err)
+			continue
+		}
+		date, err := time.Parse("2006-01-02", rec[4])
+		if err != nil {
+			continue
+		}
+
+		_, err = pool.Exec(ctx, `
+        INSERT INTO prices (name, category, price, create_date)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (name, category, price, create_date) DO NOTHING;
+    `, rec[1], rec[2], price, date)
+		if err != nil {
+			// обработка ошибки
 		}
 	}
+
 	return nil
 }
 

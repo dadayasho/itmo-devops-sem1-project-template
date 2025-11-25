@@ -3,7 +3,6 @@ package main
 import (
 	"archive/zip"
 	"bytes"
-	"database/sql"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -190,8 +189,9 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 	stmt := `
       INSERT INTO prices (name, category, price, create_date)
 	  VALUES ($1, $2, $3, $4)
-	  ON CONFLICT (name, category, price, create_date) DO UPDATE SET name = EXCLUDED.name
-	  RETURNING true;
+	  ON CONFLICT (name, category, price, create_date)
+	  DO UPDATE SET price = EXCLUDED.price
+	  RETURNING (xmax = 0) AS inserted;
     `
 
 	for _, rec := range records[1:] {
@@ -205,18 +205,19 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 		}
 		var inserted bool
 		err = tx.QueryRow(ctx, stmt, rec[1], rec[2], price, rec[4]).Scan(&inserted)
-		if err == sql.ErrNoRows {
-			duplicatesCount++
-			continue
-		} else if err != nil {
+		if err != nil {
 			_ = tx.Rollback(ctx)
 			http.Error(w, "Ошибка вставки значения: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		// ставка успешна
-		totalItems++
-		categories[rec[2]] = struct{}{}
-		totalPrice += price
+		if !inserted {
+			duplicatesCount++
+		} else {
+			totalItems++
+			categories[rec[2]] = struct{}{}
+			totalPrice += price
+		}
+
 	}
 
 	// коммит транзакции

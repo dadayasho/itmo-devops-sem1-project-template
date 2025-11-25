@@ -38,14 +38,12 @@ func importCSVWithUpsert(pool *pgxpool.Pool, filePath string) error {
 			continue
 		}
 
-		_, err = pool.Exec(ctx, `
+		_, _ = pool.Exec(ctx, `
         INSERT INTO prices (name, category, price, create_date)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (name, category, price, create_date) DO NOTHING;
     `, rec[1], rec[2], price, date)
-		if err != nil {
-			// обработка ошибки
-		}
+
 	}
 
 	return nil

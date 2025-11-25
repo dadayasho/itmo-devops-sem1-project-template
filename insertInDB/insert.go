@@ -29,14 +29,10 @@ func importCSVWithUpsert(pool *pgxpool.Pool, filePath string) error {
 
 	for _, rec := range records[1:] {
 		_, err := pool.Exec(ctx, `
-            INSERT INTO prices (id, name, category, price, create_date)
-            VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (id) DO UPDATE SET
-                name = EXCLUDED.name,
-                category = EXCLUDED.category,
-                price = EXCLUDED.price,
-                create_date = EXCLUDED.create_date
-        `, rec[0], rec[1], rec[2], rec[3], rec[4])
+            INSERT INTO prices (name, category, price, create_date)
+	  		VALUES ($1, $2, $3, $4)
+      		ON CONFLICT (name, category, price, create_date) DO NOTHING;
+        `, rec[1], rec[2], rec[3], rec[4])
 		if err != nil {
 			return fmt.Errorf("failed to insert record %v: %w", rec, err)
 		}

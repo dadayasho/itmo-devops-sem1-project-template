@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"database/sql"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -187,21 +188,13 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	stmt := `
-      INSERT INTO prices (id, name, category, price, create_date)
-      VALUES ($1, $2, $3, $4, $5)
-      ON CONFLICT (id) DO UPDATE SET
-        name = EXCLUDED.name,
-        category = EXCLUDED.category,
-        price = EXCLUDED.price,
-        create_date = EXCLUDED.create_date
-      RETURNING (xmax = 0) AS inserted;
+      INSERT INTO prices (name, category, price, create_date)
+	  VALUES ($1, $2, $3, $4)
+      ON CONFLICT (name, category, price, create_date) DO NOTHING
+      RETURNING TRUE;
     `
 
 	for _, rec := range records[1:] {
-		//if len(rec) < 5 {
-		//	totalCount++
-		//	continue
-		//}
 		totalCount++
 		// проверка даты
 		if _, err := time.Parse("2006-01-02", rec[4]); err != nil {
@@ -213,8 +206,10 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		var inserted bool
-		err = tx.QueryRow(ctx, stmt, rec[0], rec[1], rec[2], price, rec[4]).Scan(&inserted)
-		if err != nil {
+		err = tx.QueryRow(ctx, stmt, rec[1], rec[2], price, rec[4]).Scan(&inserted)
+		if err == sql.ErrNoRows {
+			duplicatesCount++
+		} else if err != nil {
 			_ = tx.Rollback(ctx)
 			http.Error(w, "Ошибка вставки значения: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -260,30 +255,42 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 	min := r.URL.Query().Get("min")
 	max := r.URL.Query().Get("max")
 
-	// валидация параметров
-	int_min, err := strconv.Atoi(min)
-	if err != nil {
-		http.Error(w, "Неверный формат min", http.StatusBadRequest)
-		return
+	// Валидация min
+	var intMin, intMax int
+	var err error
+	if min != "" {
+		intMin, err = strconv.Atoi(min)
+		if err != nil {
+			http.Error(w, "Неверный формат min", http.StatusBadRequest)
+			return
+		}
 	}
-	int_max, err := strconv.Atoi(max)
-	if err != nil {
-		http.Error(w, "Неверный формат max", http.StatusBadRequest)
+	if max != "" {
+		intMax, err = strconv.Atoi(max)
+		if err != nil {
+			http.Error(w, "Неверный формат max", http.StatusBadRequest)
+			return
+		}
+	}
+	// proverka logiki price
+	if min != "" && max != "" && intMin > intMax {
+		http.Error(w, "Минимальная цена не может быть больше максимальной", http.StatusBadRequest)
 		return
 	}
 
-	if int_min <= 0 && int_max <= 0 {
-		http.Error(w, "Неверный тип передаваемого значения цены", http.StatusBadRequest)
-		return
+	// Валидируем dateStart, если он пришёл
+	if dateStart != "" {
+		if _, err := time.Parse("2006-01-02", dateStart); err != nil {
+			http.Error(w, "Неверный формат начальной даты", http.StatusBadRequest)
+			return
+		}
 	}
-
-	if _, err := time.Parse("2006-01-02", dateStart); err != nil {
-		http.Error(w, "Неверный тип передаваемого значения начальной даты", http.StatusBadRequest)
-		return
-	}
-	if _, err := time.Parse("2006-01-02", dateEnd); err != nil {
-		http.Error(w, "Неверный тип передаваемого значения конечной даты", http.StatusBadRequest)
-		return
+	// Валидируем dateEnd, если он пришёл
+	if dateEnd != "" {
+		if _, err := time.Parse("2006-01-02", dateEnd); err != nil {
+			http.Error(w, "Неверный формат конечной даты", http.StatusBadRequest)
+			return
+		}
 	}
 
 	file, err := os.Create("/tmp/preextracted/data.csv")
@@ -294,41 +301,24 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	writer := csv.NewWriter(file)
-
 	ctx := r.Context()
-	//создание транзакции
-	tx, err := db.Begin(ctx)
-	if err != nil {
-		http.Error(w, "Ошибка создания транзакции: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	// закрытие транзакции если что-то пойдет не так
-	defer func() {
-		if p := recover(); p != nil {
-			_ = tx.Rollback(ctx)
-			panic(p)
-		} else if err != nil {
-			_ = tx.Rollback(ctx)
-		}
-	}()
 
-	rows, err := tx.Query(ctx, `
-		SELECT id, name, category, price, create_date
-		FROM prices
-		WHERE 
-			price >= $1 AND price <= $2
-			AND create_date BETWEEN $3 AND $4
-			AND name IS NOT NULL AND name <> ''
-			AND category IS NOT NULL AND category <> ''
-			AND price IS NOT NULL
-			AND create_date IS NOT NULL
-		`,
-		int_min, int_max, dateStart, dateEnd)
+	rows, err := db.Query(ctx, `
+    SELECT id, name, category, price, create_date
+    FROM prices
+    WHERE 
+        ($1 IS NULL OR price >= $1)
+        AND ($2 IS NULL OR price <= $2)
+        AND ($3 IS NULL OR create_date >= $3)
+        AND ($4 IS NULL OR create_date <= $4)
+    `,
+		intMin, intMax, dateStart, dateEnd)
 	if err != nil {
 		http.Error(w, "Не удалось считать данные из таблицы: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
+
 	for rows.Next() {
 		var id int
 		var name, category string
@@ -354,12 +344,6 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
 
 	if err := rows.Err(); err != nil {
 		http.Error(w, "Ошибка при итерации по строкам: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// коммит транзакции транзакции
-	if err := tx.Commit(ctx); err != nil {
-		http.Error(w, "Ошибка коммита транзакции: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

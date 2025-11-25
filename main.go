@@ -196,11 +196,9 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 
 	for _, rec := range records[1:] {
 		totalCount++
-		// проверка даты
 		if _, err := time.Parse("2006-01-02", rec[4]); err != nil {
 			continue
 		}
-		// проверка ценыф
 		price, err := strconv.ParseFloat(rec[3], 64)
 		if err != nil {
 			continue
@@ -209,19 +207,18 @@ func UploadOnServer(w http.ResponseWriter, r *http.Request) {
 		err = tx.QueryRow(ctx, stmt, rec[1], rec[2], price, rec[4]).Scan(&inserted)
 		if err == sql.ErrNoRows {
 			duplicatesCount++
+			continue
 		} else if err != nil {
 			_ = tx.Rollback(ctx)
 			http.Error(w, "Ошибка вставки значения: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if inserted {
-			totalItems++
-			categories[rec[2]] = struct{}{}
-			totalPrice += price
-		} else {
-			duplicatesCount++
-		}
+		// Вставка успешна
+		totalItems++
+		categories[rec[2]] = struct{}{}
+		totalPrice += price
 	}
+
 	// коммит транзакции
 	if err := tx.Commit(ctx); err != nil {
 		http.Error(w, "Ошибка коммита транзакции:"+err.Error(), http.StatusInternalServerError)

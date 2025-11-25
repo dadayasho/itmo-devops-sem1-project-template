@@ -307,10 +307,10 @@ func GetTheInfo(w http.ResponseWriter, r *http.Request) {
     SELECT id, name, category, price, create_date
     FROM prices
     WHERE 
-        ($1 IS NULL OR price >= $1)
-        AND ($2 IS NULL OR price <= $2)
-        AND ($3 IS NULL OR create_date >= $3)
-        AND ($4 IS NULL OR create_date <= $4)
+        ($1::numeric IS NULL OR price >= $1::numeric)
+  		AND ($2::numeric IS NULL OR price <= $2::numeric)
+  		AND ($3::date IS NULL OR create_date >= $3::date)
+  		AND ($4::date IS NULL OR create_date <= $4::date)
     `,
 		intMin, intMax, dateStart, dateEnd)
 	if err != nil {
